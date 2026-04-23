@@ -16,7 +16,7 @@ Each skill is a focused reference document: real code patterns, key APIs, and th
 ## Install
 
 ```sh
-curl -LsSf https://raw.githubusercontent.com/linuxdevel/Avalonia-skills/main/install.sh | sh
+curl -LsSf https://raw.githubusercontent.com/linuxdevel/Avalonia-skills/main/install.sh | bash
 ```
 
 The installer:
@@ -27,7 +27,7 @@ The installer:
 ### Custom target directory
 
 ```sh
-curl -LsSf https://raw.githubusercontent.com/linuxdevel/Avalonia-skills/main/install.sh | sh -s -- --target /path/to/skills
+curl -LsSf https://raw.githubusercontent.com/linuxdevel/Avalonia-skills/main/install.sh | bash -s -- --target /path/to/skills
 ```
 
 ## Skills

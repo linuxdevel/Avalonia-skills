@@ -3,12 +3,12 @@
 # Installs Avalonia AI agent skills into all detected agent skill directories.
 #
 # Usage:
-#   curl -LsSf https://raw.githubusercontent.com/linuxdevel/Avalonia-skills/main/install.sh | sh
+#   curl -LsSf https://raw.githubusercontent.com/linuxdevel/Avalonia-skills/main/install.sh | bash
 #
 # Or locally:
 #   ./install.sh [--target /path/to/skills/dir]
 
-set -euo pipefail
+set -eu
 
 # ── Configuration ────────────────────────────────────────────────────────────
 
