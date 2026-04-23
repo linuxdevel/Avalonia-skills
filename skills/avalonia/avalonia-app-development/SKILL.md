@@ -135,6 +135,34 @@ MyApp.Core/              — Shared ViewModels/Models
   MyApp.Core.csproj
 ```
 
+## Community Libraries & Tooling
+
+### Dependency Injection / Hosting
+| Library | NuGet | Purpose |
+|---|---|---|
+| Lemon.Hosting.Avaloniaui | `Lemon.Hosting.Avaloniaui` | .NET Generic Host integration for Avalonia |
+| Prism.Avalonia | `Prism.Avalonia` | IoC, modules, regions, navigation |
+| AvaloniaInside.Shell | GitHub: AvaloniaInside/Shell | Shell navigation + side menu for mobile/desktop |
+
+### Hot Reload / Dev Tools
+| Tool | NuGet / Repo | Purpose |
+|---|---|---|
+| HotAvalonia | `HotAvalonia` | Hot reload for AXAML without restart |
+| Live.Avalonia | GitHub: worldbeater/Live.Avalonia | Live reloading for development |
+| Avant Garde | GitHub: kuiperzone/AvantGarde | Standalone cross-platform XAML previewer |
+| DevTools for Avalonia | devtools.nlnet.net | Enhanced runtime inspector and debugger |
+
+### Localization
+| Library | NuGet | Purpose |
+|---|---|---|
+| Echoes | GitHub: Voyonic-Systems/Echoes | Simple type-safe translations/i18n |
+
+### Misc
+- **ShowMeTheXaml.Avalonia** — display corresponding XAML at runtime for demos/docs (`ShowMeTheXaml.Avalonia`)
+- **Verify.Avalonia** — extends Verify for Avalonia headless UI snapshot testing (`Verify.Avalonia`)
+- **Sortable.Avalonia** — animated drag-drop sort behavior attachments (`sortable-avalonia`)
+- **AsyncImageLoader.Avalonia** — async image loading from web for Image controls (`AsyncImageLoader.Avalonia`)
+
 ## Common Mistakes
 - Using `StartWithClassicDesktopLifetime` for mobile/WASM (must use `ISingleViewApplicationLifetime`)
 - `AvaloniaXamlLoader.Load(this)` missing in `Initialize()` — styles and resources not loaded

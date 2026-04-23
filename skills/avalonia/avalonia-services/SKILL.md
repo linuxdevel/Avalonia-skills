@@ -232,6 +232,28 @@ var isDark = settings?.GetColorValues().ThemeVariant == PlatformThemeVariant.Dar
 var reduceMotion = settings?.GetColorValues().ContrastPreference == ColorContrastPreference.High;
 ```
 
+## Community Dialog & Notification Libraries
+
+The built-in `StorageProvider` handles file dialogs. For richer dialogs and notifications:
+
+| Library | NuGet | Purpose |
+|---|---|---|
+| MessageBox.Avalonia | `MsgBox.Avalonia` | Simple message box dialogs (missing from Avalonia core) |
+| DialogHost.Avalonia | `DialogHost.Avalonia` | Material-style async overlay dialogs |
+| Movere | GitHub: jp2masa/Movere | Managed dialog service with MVVM support |
+| JamSoft.AvaloniaUI.Dialogs | `JamSoft.AvaloniaUI.Dialogs` | MVVM dialog service + Wizard control |
+| HanumanInstitute.MvvmDialogs | `HanumanInstitute.MvvmDialogs.Avalonia` | Open dialogs from ViewModel without code-behind |
+| Jc.PopupView.Avalonia | GitHub: jcsawyer/Jc.PopupView.Avalonia | Animated toasts, alerts, popups |
+| Notification.Avalonia | `Notification.Avalonia` | LINQ-style in-app notification display |
+
+### Platform Essentials (MAUI-like APIs)
+| Library | Platform | Purpose |
+|---|---|---|
+| Avae.Windows.Essentials | Windows | MAUI Essentials APIs on Windows |
+| Avae.macOS.Essentials | macOS | MAUI Essentials APIs on macOS |
+| Avae.Linux.Essentials | Linux | MAUI Essentials APIs on Linux |
+| Avae.Browser.Essentials | WASM | MAUI Essentials APIs in browser |
+
 ## Common Mistakes
 
 - **`TopLevel.GetTopLevel(this)` returns `null` before attachment** — never call in constructor; use `OnAttachedToVisualTree` or control-loaded events

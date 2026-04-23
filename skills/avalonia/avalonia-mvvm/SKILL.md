@@ -163,6 +163,23 @@ public ObservableCollection<PersonViewModel> People { get; } = new();
 
 Use `ObservableCollection<T>` (not `List<T>`) so UI updates on add/remove.
 
+## Community Libraries
+
+| Library | NuGet / Repo | Purpose |
+|---|---|---|
+| CommunityToolkit.Mvvm | `CommunityToolkit.Mvvm` | Source-generator MVVM (ObservableObject, RelayCommand) — recommended |
+| ReactiveUI | `Avalonia.ReactiveUI` | Reactive MVVM with Rx.NET observables |
+| Prism | `Prism.Avalonia` | Full MVVM framework with regions, modules, DI, dialogs |
+| Epoxy | `Epoxy.Avalonia` | Lightweight multi-platform MVVM |
+| FuncUI | `Avalonia.FuncUI` | F# MVU pattern with view DSL |
+| ReactiveElmish.Avalonia | GitHub: JordanMarr/ReactiveElmish.Avalonia | F# MVU with XAML views |
+| Stylet.Avalonia | `Stylet.Avalonia` | Lightweight ViewModel-first MVVM (Caliburn.Micro-inspired) |
+| HanumanInstitute.MvvmDialogs | `HanumanInstitute.MvvmDialogs.Avalonia` | Open dialogs from ViewModel in pure MVVM |
+| ReactiveValidation | `ReactiveValidation` | Fluent-style property validation with UI messages |
+| Markup Declarative | `Avalonia.Markup.Declarative` | Declarative C# UI and MVU helpers |
+| Lemon.ModuleNavigation | GitHub: NeverMorewd/Lemon.ModuleNavigation | .NET Generic Host + module navigation |
+| AsyncNavigation | GitHub: NeverMorewd/AsyncNavigation | Async navigation via Microsoft.Extensions.DI |
+
 ## Common Mistakes
 
 - Using `List<T>` instead of `ObservableCollection<T>` — list changes not reflected in UI

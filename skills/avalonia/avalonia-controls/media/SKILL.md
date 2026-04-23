@@ -294,6 +294,37 @@ var result = await Browser.ExecuteScriptAsync("document.title");
 
 ---
 
+## Community Media Libraries
+
+| Library | NuGet / Source | Purpose |
+|---|---|---|
+| LibVLCSharp.Avalonia | `LibVLCSharp.Avalonia` | Full VLC media engine — video, audio, streams |
+| AvaloniaGif | `AvaloniaGif` | Animated GIF playback control |
+| FFME.Avalonia | GitHub: WangsYi/ffme.avalonia | FFmpeg-based MediaElement |
+| Mpv.Avalonia | GitHub: saverinonrails/Mpv.Avalonia | MPV + OpenGL media control |
+| MediaPlayerUI.NET | `MediaPlayerUI.NET` | Reusable media player UI shell |
+| Avalonia Accelerate | avaloniaui.net/accelerate | Premium WebView + MediaPlayer from the Avalonia team |
+| CefGlue | `Xilium.CefGlue.Avalonia` | Chromium Embedded Framework WebView |
+| OutSystems WebView | GitHub: OutSystems/WebView | Full-featured Avalonia WebView |
+| MuPDFCore | `MuPDFCore` | PDF/XPS/ePub rendering via MuPDF |
+| Markdown.Avalonia | `Markdown.Avalonia` | Markdown renderer control |
+| LiveMarkdown.Avalonia | GitHub: DearVa/LiveMarkdown.Avalonia | High-performance real-time markdown |
+
+### LibVLCSharp Full Example
+```csharp
+// NuGet: LibVLCSharp.Avalonia + VideoLAN.LibVLC.Windows (or .Linux, .Mac)
+using LibVLCSharp.Shared;
+using LibVLCSharp.Avalonia;
+
+var libVlc = new LibVLC();
+var mediaPlayer = new MediaPlayer(libVlc);
+
+// In XAML:
+// <vlc:VideoView MediaPlayer="{Binding MediaPlayer}" HorizontalAlignment="Stretch"/>
+
+mediaPlayer.Play(new Media(libVlc, new Uri("https://example.com/stream.mp4")));
+```
+
 ## Common Mistakes
 
 | Mistake | Fix |

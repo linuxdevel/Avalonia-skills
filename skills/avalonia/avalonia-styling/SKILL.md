@@ -279,6 +279,39 @@ Useful when subclassing a control only for behavior changes, not visual identity
 
 ---
 
+## Community Themes & Icon Libraries
+
+### Themes
+| Theme | NuGet / Repo | Style |
+|---|---|---|
+| Material.Avalonia | `Material.Avalonia` | Google Material Design theme |
+| Semi.Avalonia | `Semi.Avalonia` | Semi Design (modern, clean) |
+| SukiUI | `SukiUI` | Flat design, highly customizable |
+| ShadUI | GitHub: accntech/shad-ui | shadcn/ui inspired, modern |
+| FluentAvalonia | `FluentAvalonia` | WinUI3 Fluent controls + theme |
+| Ursa.Avalonia | `Irihi.Ursa` | Full UI library with rich controls |
+| AntDesign.Avalonia | GitHub: MicroSugarDeveloperOrg/AntDesign.Avalonia | Ant Design theme |
+| Neumorphism.Avalonia | GitHub: flarive/Neumorphism.Avalonia | Neumorphism soft-UI design |
+| Classic.Avalonia | GitHub: BAndysc/Classic.Avalonia | Windows 9x retro theme |
+| Pipboy.Avalonia | GitHub: NeverMorewd/Pipboy.Avalonia | Fallout 4 Pip-Boy inspired theme |
+| Huskui.Avalonia | GitHub: d3ara1n/Huskui.Avalonia | Modern, ParkUI/Radix-inspired |
+| Citrus.Avalonia | `Citrus.Avalonia` | Modern styles for built-in controls |
+| WPFDarkTheme | GitHub: AngryCarrot789/WPFDarkTheme | Compact soft dark theme |
+
+### Icon Libraries
+| Library | NuGet | Icons |
+|---|---|---|
+| Icons.Avalonia | `Projektanker.Icons.Avalonia` | FontAwesome, Material, and more |
+| IconPacks.Avalonia | `MahApps.Metro.IconPacks.Avalonia` | 21,000+ icons from multiple packs |
+| Material.Icons.Avalonia | `Material.Icons.Avalonia` | 6000+ Material Design Icons |
+| HeroIcons.Avalonia | GitHub: russkyc/heroicons-avalonia | Heroicons set |
+| Lucide.Avalonia | `Lucide.Avalonia` | Lucide icon library |
+
+### CSS-like Styling
+- **Nlnet.Avalonia.Css** — write Avalonia styles in CSS syntax (`Nlnet.Avalonia.Css`)
+
+---
+
 ## Common Mistakes
 
 - **Using WPF `Triggers`** — does not exist in Avalonia. Use pseudoclasses + nested styles instead.

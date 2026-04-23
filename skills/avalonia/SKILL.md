@@ -31,3 +31,27 @@ Avalonia is a cross-platform .NET UI framework using XAML (`.axaml`), with its o
 | Headless testing, UI automation | `avalonia-testing` |
 | Packaging for macOS/Windows/Linux/WASM | `avalonia-deployment` |
 | Migrating from WPF | `avalonia-wpf-migration` |
+
+## Notable Community Packages
+
+A curated short-list of the most commonly needed community packages:
+
+| Need | Package |
+|---|---|
+| Message box dialogs | `MsgBox.Avalonia` |
+| Hot reload during dev | `HotAvalonia` |
+| SVG images | `Svg.Skia` |
+| Animated GIFs | `AvaloniaGif` |
+| Charts | `LiveChartsCore.SkiaSharpView.Avalonia` or `ScottPlot.Avalonia` |
+| Code editor control | `AvaloniaEdit` |
+| Docking layout | `Dock.Avalonia` |
+| Behaviors (DataTrigger replacement) | `Avalonia.Xaml.Behaviors` |
+| Node editor | `NodifyAvalonia` (GitHub: BAndysc) |
+| Material theme | `Material.Avalonia` |
+| Fluent/WinUI controls | `FluentAvalonia` |
+| Rich dialog service | `HanumanInstitute.MvvmDialogs.Avalonia` |
+| VLC media player | `LibVLCSharp.Avalonia` |
+| PDF viewer | `MuPDFCore` |
+| Deployment packaging | PupNet Deploy (GitHub: kuiperzone/PupNet-Deploy) |
+
+Full community list: https://github.com/AvaloniaCommunity/awesome-avalonia

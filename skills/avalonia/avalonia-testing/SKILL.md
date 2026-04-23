@@ -131,6 +131,26 @@ public class Tests
 }
 ```
 
+## Community Testing Libraries
+
+| Library | NuGet | Purpose |
+|---|---|---|
+| Verify.Avalonia | `Verify.Avalonia` | Extends Verify for snapshot/approval testing of Avalonia UI |
+
+### Snapshot Testing with Verify.Avalonia
+```csharp
+[AvaloniaFact]
+public async Task Window_MatchesSnapshot()
+{
+    var window = new MainWindow();
+    window.Show();
+
+    await Verify(window); // saves .verified.png on first run, diffs on subsequent
+}
+```
+Requires: `Verify.Avalonia` + `Verify.Xunit` (or NUnit variant).
+On first run, creates a `.verified.png` baseline. Subsequent runs diff against it — fails on visual regression.
+
 ## Common Mistakes
 - Missing `[assembly: AvaloniaTestApplication]` — headless renderer not initialized, NullReferenceException
 - Using `[Fact]` instead of `[AvaloniaFact]` for UI tests — no Avalonia dispatcher, random failures

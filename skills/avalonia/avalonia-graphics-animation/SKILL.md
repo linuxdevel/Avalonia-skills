@@ -246,6 +246,31 @@ Composite:
 </Carousel.PageTransition>
 ```
 
+## Community Graphics Libraries
+
+| Library | NuGet | Purpose |
+|---|---|---|
+| Svg.Skia | `Svg.Skia` | SVG rendering in Avalonia via Skia |
+| LiveCharts2 | `LiveChartsCore.SkiaSharpView.Avalonia` | Animated, interactive charts and gauges |
+| ScottPlot | `ScottPlot.Avalonia` | Fast data plotting |
+| OxyPlot | `OxyPlot.Avalonia` | Scientific plotting |
+| PanAndZoom | `PanAndZoom` | Pan/zoom container with Skia backend |
+| Aura3D | GitHub: CeSun/Aura3D | Lightweight 3D rendering control |
+| GoDiagram | `Northwoods.GoAvalonia` | Interactive diagram/graph control |
+| AvaloniaGraphControl | `AvaloniaGraphControl` | Auto-layout graph panel (Microsoft MSAGL) |
+| Core2D | GitHub: wieslawsoltes/Core2D | 2D diagram editor library |
+
+### SVG in Avalonia
+```xml
+<!-- NuGet: Svg.Skia -->
+<Image>
+    <Image.Source>
+        <svg:SvgImage Source="avares://MyApp/Assets/icon.svg"/>
+    </Image.Source>
+</Image>
+```
+Or use `SvgImage` control directly from `Svg.Skia.Avalonia` package.
+
 ## Common Mistakes
 
 - **Transitions only fire on property changes** — not on initial value set; hardcoded initial value + Transition won't animate on load

@@ -124,6 +124,31 @@ Enable for smaller binaries — may break reflection-heavy code:
 ```
 Avalonia 12 is trim-compatible. Watch for reflection in converters, ViewLocator.
 
+## Community Deployment Tools
+
+| Tool | NuGet / Repo | Purpose |
+|---|---|---|
+| PupNet Deploy | GitHub: kuiperzone/PupNet-Deploy | Cross-platform deployment: AppImage, Flatpak, deb, rpm, MSIX, zip |
+| dotnet-deb | `dotnet-deb` tool | Generate Debian `.deb` packages |
+| Dotnet.Bundle | `Dotnet.Bundle` tool | macOS `.app` bundle + DMG creation |
+| macOS.SparkleUpdater.Avalonia | GitHub: Deadpikle/macOS.SparkleUpdater.Avalonia | Sparkle auto-update integration for macOS |
+
+### PupNet Quick Start
+```bash
+dotnet tool install --global KuiperZone.PupNet
+pupnet --help
+
+# Build AppImage for Linux
+pupnet -r linux-x64 -k AppImage
+
+# Build MSIX for Windows
+pupnet -r win-x64 -k Msix
+
+# Build Setup.exe (Inno)
+pupnet -r win-x64 -k Setup
+```
+PupNet reads a `pupnet.conf` in your project root. Handles icon conversion, desktop entries, version injection automatically.
+
 ## Common Mistakes
 - macOS `.app` bundle missing `NSHighResolutionCapable` → blurry on Retina
 - Publishing without `--self-contained` to machines without .NET installed

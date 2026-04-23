@@ -171,6 +171,39 @@ protected override Type StyleKeyOverride => typeof(Button);
 - Include `Generic.axaml` as embedded resource: `avares://MyLib/Themes/Generic.axaml`
 - Register in consuming app: `<StyleInclude Source="avares://MyLib/Themes/Generic.axaml"/>`
 
+## Community Tools for Control Development
+
+| Tool / Library | NuGet / Repo | Purpose |
+|---|---|---|
+| HotAvalonia | `HotAvalonia` | Hot reload for AXAML during control development |
+| Avant Garde | GitHub: kuiperzone/AvantGarde | Standalone XAML previewer for control libraries |
+| ShowMeTheXaml.Avalonia | `ShowMeTheXaml.Avalonia` | Show rendered XAML at runtime (useful for demos) |
+| Avalonia.Xaml.Behaviors | `Avalonia.Xaml.Behaviors` | Attach behaviors to controls without subclassing |
+| Sortable.Avalonia | `sortable-avalonia` | Drag-drop sort behavior for ItemsControls |
+
+### Behaviors (Avalonia.Xaml.Behaviors)
+Add interactivity without code-behind or subclassing:
+```xml
+<!-- NuGet: Avalonia.Xaml.Behaviors -->
+<Button>
+    <Interaction.Behaviors>
+        <EventTriggerBehavior EventName="Click">
+            <InvokeCommandAction Command="{Binding MyCommand}"/>
+        </EventTriggerBehavior>
+    </Interaction.Behaviors>
+</Button>
+
+<!-- DataTrigger equivalent -->
+<Border>
+    <Interaction.Behaviors>
+        <DataTriggerBehavior Binding="{Binding IsLoading}" ComparisonCondition="Equal" Value="True">
+            <ChangePropertyAction TargetObject="{Binding #spinner}" PropertyName="IsVisible" Value="True"/>
+        </DataTriggerBehavior>
+    </Interaction.Behaviors>
+</Border>
+```
+This is the Avalonia replacement for WPF `DataTrigger` and `EventTrigger`.
+
 ## Common Mistakes
 
 - Inheriting from `Control` (WPF habit) instead of `TemplatedControl` for lookless controls
