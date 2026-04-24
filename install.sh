@@ -6,7 +6,7 @@
 #   curl -LsSf https://raw.githubusercontent.com/linuxdevel/Avalonia-skills/main/install.sh | bash
 #
 # Or locally:
-#   ./install.sh [--target /path/to/skills/dir]
+#   ./install.sh [--target /real/path/to/skills/dir]
 
 set -eu
 
@@ -45,14 +45,29 @@ EXTRA_TARGET=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --target)
-            EXTRA_TARGET="$2"
+            EXTRA_TARGET="${2:-}"
+            if [[ -z "$EXTRA_TARGET" ]]; then
+                error "--target requires a directory path"
+                exit 1
+            fi
+            # Reject obvious placeholders from copy-pasted docs
+            case "$EXTRA_TARGET" in
+                /path/to/*|/path/*|"<"*">"*|/your/*|./path/*)
+                    error "'--target $EXTRA_TARGET' looks like a placeholder, not a real path."
+                    error "Pass a real directory, e.g.:  --target \"\$HOME/my-agent/skills\""
+                    error "Or omit --target — the installer auto-detects ~/.config/opencode/skills,"
+                    error "~/.claude/skills, and ~/.agents/skills."
+                    exit 1
+                    ;;
+            esac
             shift 2
             ;;
         --help|-h)
-            printf "Usage: install.sh [--target /path/to/skills/dir]\n"
+            printf "Usage: install.sh [--target /real/path/to/skills/dir]\n"
             printf "  Installs Avalonia skills to all detected agent directories.\n"
             printf "  Physical files go to: %s\n" "${CANONICAL_DIR}"
             printf "  Symlinks are created in each detected agent's skills directory.\n"
+            printf "  Use --target only with a real path (e.g. \$HOME/my-agent/skills).\n"
             exit 0
             ;;
         *)
@@ -135,7 +150,7 @@ fi
 if [[ ${#FOUND_DIRS[@]} -eq 0 ]]; then
     warn "No agent skills directories detected on this system."
     warn "Tried: ${AGENT_DIRS[*]}"
-    warn "Use --target /path/to/skills to specify a directory manually."
+    warn "Use --target /real/path to specify a directory manually (no placeholders)."
     warn "Physical files are available at: ${CANONICAL_DIR}/skills/${SKILL_NAME}"
     exit 0
 fi

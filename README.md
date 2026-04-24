@@ -26,9 +26,13 @@ The installer:
 
 ### Custom target directory
 
+Pass `--target` with a **real** directory you want the skills symlinked into (e.g. an agent skills dir the installer doesn't auto-detect):
+
 ```sh
-curl -LsSf https://raw.githubusercontent.com/linuxdevel/Avalonia-skills/main/install.sh | bash -s -- --target /path/to/skills
+curl -LsSf https://raw.githubusercontent.com/linuxdevel/Avalonia-skills/main/install.sh | bash -s -- --target ~/my-agent/skills
 ```
+
+> The installer refuses obvious placeholder paths like `/path/to/skills`.
 
 ## Skills
 
