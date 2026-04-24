@@ -1,0 +1,37 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="using:System">
+
+  <ResourceDictionary.ThemeDictionaries>
+
+    <ResourceDictionary x:Key="Light">
+      <SolidColorBrush x:Key="SurfaceBackgroundBrush" Color="#F8FAFC"/>
+      <SolidColorBrush x:Key="SurfaceBrush"           Color="#FFFFFF"/>
+      <SolidColorBrush x:Key="SurfaceMutedBrush"      Color="#F1F5F9"/>
+      <SolidColorBrush x:Key="TextPrimaryBrush"       Color="#0F172A"/>
+      <SolidColorBrush x:Key="TextSecondaryBrush"     Color="#334155"/>
+      <SolidColorBrush x:Key="TextMutedBrush"         Color="#64748B"/>
+      <SolidColorBrush x:Key="BorderBrush"            Color="#E2E8F0"/>
+      <SolidColorBrush x:Key="AccentBrush"            Color="#2563EB"/>
+      <SolidColorBrush x:Key="TextOnAccentBrush"      Color="#FFFFFF"/>
+    </ResourceDictionary>
+
+    <ResourceDictionary x:Key="Dark">
+      <SolidColorBrush x:Key="SurfaceBackgroundBrush" Color="#020617"/>
+      <SolidColorBrush x:Key="SurfaceBrush"           Color="#0F172A"/>
+      <SolidColorBrush x:Key="SurfaceMutedBrush"      Color="#1E293B"/>
+      <SolidColorBrush x:Key="TextPrimaryBrush"       Color="#F8FAFC"/>
+      <SolidColorBrush x:Key="TextSecondaryBrush"     Color="#E2E8F0"/>
+      <SolidColorBrush x:Key="TextMutedBrush"         Color="#64748B"/>
+      <SolidColorBrush x:Key="BorderBrush"            Color="#1E293B"/>
+      <SolidColorBrush x:Key="AccentBrush"            Color="#3B82F6"/>
+      <SolidColorBrush x:Key="TextOnAccentBrush"      Color="#FFFFFF"/>
+    </ResourceDictionary>
+
+  </ResourceDictionary.ThemeDictionaries>
+
+  <CornerRadius x:Key="RadiusMd">8</CornerRadius>
+  <CornerRadius x:Key="RadiusLg">12</CornerRadius>
+  <Thickness    x:Key="PaddingCard">20</Thickness>
+  <Thickness    x:Key="PaddingPage">24</Thickness>
+</ResourceDictionary>

@@ -57,6 +57,16 @@ curl -LsSf https://raw.githubusercontent.com/linuxdevel/Avalonia-skills/main/ins
 | `avalonia-testing` | Headless UI tests, ViewModel unit tests, Avalonia.Headless |
 | `avalonia-deployment` | Windows, macOS, Linux, WASM, Android, iOS packaging |
 | `avalonia-wpf-migration` | WPF → Avalonia mapping, API differences, migration patterns |
+| `avalonia-pro-max` | Router for visual design / UI polish — beautiful Avalonia UIs |
+| `avalonia-pro-max/design-system` | Semantic tokens, palettes, typography, spacing, theme variants |
+| `avalonia-pro-max/themes` | FluentAvalonia, SukiUI, Semi, Material, ShadUI, Ursa selection matrix |
+| `avalonia-pro-max/components` | Production XAML recipes: buttons, cards, nav, dialogs, forms |
+| `avalonia-pro-max/motion` | Transitions, animations, easings, reduced-motion |
+| `avalonia-pro-max/accessibility` | AutomationProperties, contrast, keyboard nav, screen readers |
+| `avalonia-pro-max/layout-patterns` | Responsive, breakpoints, sidebar/nav, dashboards |
+| `avalonia-pro-max/icons-imagery` | Icon libraries, SVG, brand assets, image optimization |
+| `avalonia-pro-max/review-checklist` | Pre-merge / pre-release UI audit checklist |
+| `avalonia-pro-max/preview-server` | Generate 3 design variants, render each via Avalonia.Headless, serve an HTML gallery for the user to pick |
 
 ## How it works
 

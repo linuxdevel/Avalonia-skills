@@ -1,0 +1,2 @@
+# One package per line: Name or Name:Version. Lines starting with # are ignored.
+# This example variant uses only the host's default packages, so this file is empty.

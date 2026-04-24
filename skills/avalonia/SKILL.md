@@ -31,6 +31,7 @@ Avalonia is a cross-platform .NET UI framework using XAML (`.axaml`), with its o
 | Headless testing, UI automation | `avalonia-testing` |
 | Packaging for macOS/Windows/Linux/WASM | `avalonia-deployment` |
 | Migrating from WPF | `avalonia-wpf-migration` |
+| **Designing/polishing UI for visual quality, picking themes, building a design system, motion, accessibility, layout patterns, icons, pre-ship review** | `avalonia-pro-max` |
 
 ## Notable Community Packages
 

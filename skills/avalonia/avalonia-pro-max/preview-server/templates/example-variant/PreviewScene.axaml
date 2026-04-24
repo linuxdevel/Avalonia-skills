@@ -1,0 +1,77 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid ColumnDefinitions="240,*">
+
+    <!-- Sidebar -->
+    <Border Grid.Column="0" Background="{DynamicResource SurfaceMutedBrush}"
+            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
+      <StackPanel Margin="16" Spacing="6">
+        <TextBlock Classes="h2" Text="Acme" Margin="8,8,0,16"/>
+        <Border Background="{DynamicResource AccentBrush}" CornerRadius="6" Padding="10,8">
+          <TextBlock Text="Dashboard" Foreground="{DynamicResource TextOnAccentBrush}" FontWeight="Medium"/>
+        </Border>
+        <Border Padding="10,8"><TextBlock Text="Projects" Foreground="{DynamicResource TextSecondaryBrush}"/></Border>
+        <Border Padding="10,8"><TextBlock Text="Team"     Foreground="{DynamicResource TextSecondaryBrush}"/></Border>
+        <Border Padding="10,8"><TextBlock Text="Settings" Foreground="{DynamicResource TextSecondaryBrush}"/></Border>
+      </StackPanel>
+    </Border>
+
+    <!-- Main content -->
+    <ScrollViewer Grid.Column="1">
+      <StackPanel Margin="32" Spacing="24">
+
+        <StackPanel Spacing="6">
+          <TextBlock Classes="h1" Text="Dashboard"/>
+          <TextBlock Classes="muted" Text="Welcome back — here's what's happening today."/>
+        </StackPanel>
+
+        <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto">
+          <Border Grid.Column="0" Classes="card" Margin="0,0,12,0">
+            <StackPanel Spacing="6">
+              <TextBlock Classes="muted" Text="Revenue"/>
+              <TextBlock FontSize="28" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TextPrimaryBrush}" Text="$48,294"/>
+              <TextBlock Classes="muted" Text="+12.4% vs last month"/>
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="1" Classes="card" Margin="6,0">
+            <StackPanel Spacing="6">
+              <TextBlock Classes="muted" Text="Active users"/>
+              <TextBlock FontSize="28" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TextPrimaryBrush}" Text="2,841"/>
+              <TextBlock Classes="muted" Text="+3.1% vs last month"/>
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="2" Classes="card" Margin="12,0,0,0">
+            <StackPanel Spacing="6">
+              <TextBlock Classes="muted" Text="Open issues"/>
+              <TextBlock FontSize="28" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TextPrimaryBrush}" Text="17"/>
+              <TextBlock Classes="muted" Text="-4 since yesterday"/>
+            </StackPanel>
+          </Border>
+        </Grid>
+
+        <Border Classes="card">
+          <StackPanel Spacing="12">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Classes="h2" Text="Recent activity"/>
+              <Button   Grid.Column="1" Classes="secondary" Content="View all"/>
+            </Grid>
+            <StackPanel Spacing="8">
+              <TextBlock Classes="body" Text="• Project ‘Acme website redesign’ created"/>
+              <TextBlock Classes="body" Text="• 3 new team members invited"/>
+              <TextBlock Classes="body" Text="• Deployment to production succeeded"/>
+              <TextBlock Classes="body" Text="• Monthly report exported"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+              <Button Classes="secondary" Content="Cancel"/>
+              <Button Classes="primary"   Content="New project"/>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>
