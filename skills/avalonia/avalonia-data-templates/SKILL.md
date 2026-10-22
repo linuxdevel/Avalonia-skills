@@ -1,6 +1,6 @@
 ---
 name: avalonia-data-templates
-description: Use when defining DataTemplate, ItemTemplate, ContentTemplate, selecting templates by data type, using TreeDataTemplate for hierarchical data, implementing IDataTemplate selectors, or using FuncDataTemplate in Avalonia. Covers template scoping, app-level templates, and compiled binding in templates.
+description: Use when defining DataTemplate, ItemTemplate, ContentTemplate, selecting templates by data type, using TreeDataTemplate for hierarchical data, implementing IDataTemplate selectors, or using FuncDataTemplate in Avalonia. Covers template scoping, app-level templates, and compiled bindings in templates (default in 12.0+, so `x:DataType` is required; `{ReflectionBinding}` as opt-out), including TableView/DataGrid column templates.
 ---
 
 # Avalonia Data Templates
@@ -8,7 +8,8 @@ description: Use when defining DataTemplate, ItemTemplate, ContentTemplate, sele
 ## Overview
 
 DataTemplates define how a data object is rendered as UI. They apply to:
-- `ItemsControl` and subclasses (`ListBox`, `TreeView`, `DataGrid`) via `ItemTemplate`
+- `ItemsControl` and subclasses (`ListBox`, `TreeView`) via `ItemTemplate`
+- `TableViewColumn.CellTemplate` (12.1+) and DataGrid template columns (see Column Templates below)
 - `ContentControl` and subclasses via `ContentTemplate`
 - Any `Content` property — Avalonia walks up the template tree to find a matching `DataTemplate`
 
@@ -31,7 +32,9 @@ Template matching is by the data object's **runtime type**. First matching templ
 </ListBox>
 ```
 
-`x:DataType` enables compiled bindings inside the template. Every DataTemplate that uses compiled bindings must declare it.
+`x:DataType` enables compiled bindings inside the template.
+
+> **12.0+:** compiled bindings are the **default** (`AvaloniaUseCompiledBindingsByDefault` is on in new templates), so every `{Binding}` needs a known `x:DataType` or the build fails (AVLN2000). For genuinely dynamic data use `{ReflectionBinding Path}`. **11.x:** compiled bindings are opt-in (`x:CompileBindings="True"` / the MSBuild property); without it `{Binding}` is reflection-based. See `avalonia-versions`.
 
 ---
 
@@ -149,12 +152,38 @@ var template = new FuncDataTemplate<PersonViewModel>((person, _) =>
 var template = new FuncDataTemplate<PersonViewModel>((person, scope) =>
 {
     var tb = new TextBlock();
-    tb.Bind(TextBlock.TextProperty, new Binding(nameof(PersonViewModel.FullName)));
+    // 12.0+: compiled binding from a lambda (no reflection)
+    tb.Bind(TextBlock.TextProperty,
+        CompiledBinding.Create((PersonViewModel p) => p.FullName));
+    // 11.x idiom / reflection fallback: new Binding(nameof(PersonViewModel.FullName))
+    // 12: new ReflectionBinding(nameof(PersonViewModel.FullName))
     return tb;
 });
 
 myListBox.ItemTemplate = template;
 ```
+
+---
+
+## Column Templates (TableView 12.1+, DataGrid)
+
+```xml
+<!-- TableView (12.1+) -->
+<TableView ItemsSource="{Binding People}">
+    <TableView.Columns>
+        <TableViewColumn Header="Name" Binding="{Binding Name}"/>
+        <TableViewColumn Header="Status">
+            <TableViewColumn.CellTemplate>
+                <DataTemplate x:DataType="vm:PersonViewModel">
+                    <TextBlock Text="{Binding Status}"/>
+                </DataTemplate>
+            </TableViewColumn.CellTemplate>
+        </TableViewColumn>
+    </TableView.Columns>
+</TableView>
+```
+
+`CellTemplate` takes priority over `Binding`. DataGrid (`Avalonia.Controls.DataGrid`, maintenance-only) uses `DataGridTemplateColumn.CellTemplate` the same way. Column `Binding`s are compiled in 12: the row type is inferred from `ItemsSource` when possible; otherwise set it explicitly with `Binding="{Binding Name, DataType={x:Type vm:PersonViewModel}}"` or fall back to `{ReflectionBinding Name}`. See `avalonia-controls/data-display`.
 
 ---
 
@@ -214,7 +243,7 @@ public class TreeNode
 
 Mixed types in a tree (files and folders):
 ```csharp
-public class AnimalTreeSelector : IDataTemplate
+public class NodeTemplateSelector : IDataTemplate
 {
     public Control? Build(object? param) => param switch
     {
@@ -280,7 +309,9 @@ Change the layout panel used to arrange items:
 
 ## Common Mistakes
 
-- **Missing `x:DataType` on DataTemplate** — compiled bindings inside the template have no type context and fail to build. Every DataTemplate using `{Binding}` needs `x:DataType`.
+- **Missing `x:DataType` on DataTemplate** — in 12.0+ (compiled bindings default) the build fails (AVLN2000) without a type context; in 11.x with compiled bindings enabled it fails the same way. Every DataTemplate using `{Binding}` needs `x:DataType`, or use `{ReflectionBinding}`.
+- **`new Binding(...)` in C# templates (12.0+)** — the 11.x idiom is gone from the compiled-by-default model; use `CompiledBinding.Create` or `ReflectionBinding`.
+- **Binding plugins like `{Binding ^Stream}` (12.0+)** — plugins were removed; see `avalonia-versions` for replacements.
 - **Wrong resource scope** — a DataTemplate in `Window.Resources` is not visible to templates inside a nested `UserControl`. Each `UserControl` has its own resource scope. Put shared templates in `Application.Resources` or `Application.DataTemplates`.
 - **Using `DataTemplate` instead of `TreeDataTemplate` for tree data** — `DataTemplate` renders the node content but does not provide an `ItemsSource` binding for children; `TreeView` will not recurse into children.
 - **Matching on interface type** — Avalonia's automatic type-based template selection matches on the **concrete runtime type**, not interfaces. `IDataTemplate.Match()` must explicitly check for the concrete type, or register templates against the concrete type.

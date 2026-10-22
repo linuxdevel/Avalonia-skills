@@ -157,10 +157,30 @@ For powerful auto-grid behavior, use `AvaloniaAutoGrid` or custom `Layout` with 
 | **Top tab nav** | ≤5 destinations, content-focused | `TabControl` |
 | **Bottom nav** | Mobile, ≤5 destinations | FluentAvalonia `NavigationView PaneDisplayMode="LeftMinimal"` (mobile-styled) or custom `Grid` with `RadioButton`s |
 | **Hamburger drawer** | Many destinations + secondary nav | `SplitView DisplayMode="Overlay"` with toggle |
+| **Hamburger drawer, built-in (12.0+)** | Mobile/adaptive apps without a third-party nav control | `DrawerPage` (page-based navigation system, see below) |
 | **Command palette** | Power users, search-driven | Custom modal with TextBox + filtered ListBox; bind `Ctrl+K` |
 | **Breadcrumb** | Hierarchical content (file system, settings) | Custom `ItemsControl` with separator template |
 
 Never mix sidebar + bottom nav at the same hierarchy level.
+
+### Page-based navigation (12.0+)
+
+Avalonia 12.0 adds a built-in page navigation system: `Page`, `ContentPage`, `DrawerPage`, `CarouselPage` and `NavigationPage`/`TabbedPage` (automation peers exist for all three of `DrawerPage`, `NavigationPage`, `TabbedPage`; full docs pages for them were not reachable when verifying, so check the API docs before use). Not available in 11.3 — use `SplitView`/`TabControl`/FluentAvalonia there.
+
+`DrawerPage` (verified API members) wraps `Drawer` (pane content) and `Content`, with `DrawerBehavior` (`Auto` / `Disabled` / `Flyout` / `Locked`), `DrawerLayoutBehavior`, `DrawerPlacement`, `DrawerLength`, `CompactDrawerLength`, `DisplayMode` (`SplitViewDisplayMode`), `DrawerBreakpointLength` (size at which it switches to overlay; `0` disables), `IsOpen`, `IsGestureEnabled` (swipe), `BackdropBrush`, plus header/footer/icon slots (`DrawerHeader`, `DrawerFooter`, `DrawerIcon`, their `*Template`s and `*Background`/`*Foreground`):
+
+```xml
+<DrawerPage DrawerLength="260" DrawerBreakpointLength="800" IsGestureEnabled="True">
+  <DrawerPage.Drawer>
+    <!-- nav list: same ListBox.nav recipe as the SplitView sidebar -->
+  </DrawerPage.Drawer>
+  <DrawerPage.Content>
+    <ContentControl Content="{Binding CurrentView}"/>
+  </DrawerPage.Content>
+</DrawerPage>
+```
+
+Guidance: it replaces the hand-rolled "sidebar on desktop, overlay on compact" `SplitView` logic by using `DrawerBreakpointLength` instead of code-behind width switches. Page lifecycle events fire after transitions complete.
 
 ### Adaptive nav (single source of truth)
 
@@ -209,16 +229,29 @@ For grid virtualization, use `ItemsRepeater` with `StackLayout` or `UniformGridL
 
 ## Window Chrome
 
+**11.x:**
 ```xml
 <Window ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaTitleBarHeightHint="-1"
         ExtendClientAreaChromeHints="PreferSystemChrome">
 ```
 
-Hints:
+Hints (**(11.x)** only — `ExtendClientAreaChromeHints` is removed in 12):
 - `PreferSystemChrome` — keep OS controls (recommended).
 - `NoChrome` — fully custom (provide your own min/max/close buttons).
 - `OSXThickTitleBar` — macOS thicker bar with traffic lights inset.
+
+**12.0+:**
+```xml
+<Window ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        WindowDecorations="Full">
+```
+
+- `Window.WindowDecorations` (enum `WindowDecorations`: `Full` = default, `BorderOnly` = border without title bar, `None`) replaces `SystemDecorations` and `ExtendClientAreaChromeHints`. `SystemDecorations` is obsolete in 12.
+- `ExtendClientAreaToDecorationsHint` stays; on Windows it now works in all scenarios, so remove old maximized-margin workarounds.
+- **Themeable client-side decorations (12.0+):** `WindowDrawnDecorations` (namespace `Avalonia.Controls.Chrome`) is a logical element (derives from `Animatable`, not `Control`) that manages app-drawn decorations: `Template` (`IWindowDrawnDecorationsTemplate`), `HasTitleBar`/`HasBorder`/`HasShadow`, `TitleBarHeight`/`FrameThickness`/`ShadowThickness` (effective values; theme sets the `Default*` ones), `Title`. It is supplied by the theme, not placed in window XAML; it replaces `Chrome.TitleBar`, `CaptionButtons` and `ChromeOverlayLayer` (removed). Restyle it through the theme instead of overlaying your own buttons. Member-level docs: `WindowDecorationProperties`, `IWindowDrawnDecorationsTemplate` in the same namespace; read them before writing a custom template.
+- **Windows 11 corner rounding (12.1+):** attached property `Win32Properties.WindowCornerPreference` (nested enum `Win32Properties.WindowCornerPreference`, namespace `Avalonia.Controls`: `Default`, `DoNotRound`, `Round`, `RoundSmall`; maps to DWM `DWM_WINDOW_CORNER_PREFERENCE`). XAML: `<Window Win32Properties.WindowCornerPreference="RoundSmall">`; code: `Win32Properties.SetWindowCornerPreference(window, Win32Properties.WindowCornerPreference.DoNotRound)`. Works only on Windows 11 (build 22000+), ignored elsewhere.
 
 Reserve 40 px top safe area for the drag region. Add a `DragRegion` element with `IsHitTestVisible="True"` and listen for pointer drag if going chromeless.
 

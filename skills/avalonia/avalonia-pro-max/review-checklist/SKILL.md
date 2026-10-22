@@ -13,7 +13,7 @@ Run this before merging UI work or cutting a release. Each item maps back to a s
 2. Toggle `RequestedThemeVariant` between Light and Dark.
 3. Tab through every screen with the keyboard only.
 4. Run a screen reader on the main flows (Narrator on Win, VoiceOver on macOS).
-5. Profile a session with Avalonia DevTools (`F12`) for layout/render issues.
+5. Profile a session with Avalonia DevTools (`F12`) for layout/render issues (12.x: needs the `AvaloniaUI.DiagnosticsSupport` package + `AttachDeveloperTools()`; 11.x: `Avalonia.Diagnostics` + `AttachDevTools()`).
 6. Tick each box. If anything fails → fix → re-run from the top.
 
 ---
@@ -32,16 +32,16 @@ Run this before merging UI work or cutting a release. Each item maps back to a s
 ## Theme Library → `themes`
 
 - [ ] Exactly one base theme imported (no Fluent + Material conflict)
-- [ ] Theme NuGets at supported version for the Avalonia version in use
+- [ ] Theme NuGets at a version that supports the Avalonia version in use (see compatibility table in `themes`)
 - [ ] No app code depends on internal theme NuGet brush keys (only via own semantic tokens)
-- [ ] Custom title bar / SukiWindow / chrome behaves on Win, macOS, Linux
+- [ ] Custom title bar / SukiWindow / chrome behaves on Win, macOS, Linux (12.0+: `WindowDecorations` / `WindowDrawnDecorations`, no `SystemDecorations` / `ExtendClientAreaChromeHints`)
 
 ## Component Quality → `components`
 
 - [ ] All buttons use shared classes (`primary` / `secondary` / `ghost` / `danger` / `icon`)
 - [ ] Icon-only buttons have ≥36×36 hit area (desktop) or 44×44 (touch)
 - [ ] Cards use the shared `Border.card` style — no per-view ad-hoc cards
-- [ ] Forms have visible labels (not placeholder-only)
+- [ ] Forms have visible labels (not placeholder-only); `PlaceholderText` (12.0+) / `Watermark` (11.x) per project version, no obsolete `Watermark` in 12
 - [ ] Form errors render inline, not only in a top banner
 - [ ] Destructive actions confirmed via dialog or use `danger` class
 - [ ] Empty states show icon + headline + description + CTA
@@ -59,6 +59,7 @@ Run this before merging UI work or cutting a release. Each item maps back to a s
 - [ ] At most 2–3 concurrent animations per visible screen
 - [ ] Reduced-motion path tested (durations → zero)
 - [ ] Looping animations used sparingly and only on small elements
+- [ ] 12.0+: animations that must run while hidden set `PlaybackBehavior="Always"`; no removed `CubicBezierEasing` (use `SplineEasing`)
 
 ## Accessibility → `accessibility`
 
@@ -101,12 +102,12 @@ Run this before merging UI work or cutting a release. Each item maps back to a s
 
 ## Performance
 
-- [ ] `CompiledBindings` enabled (default in Avalonia 11+)
+- [ ] Compiled bindings enabled: on by default since Avalonia 12.0 (`AvaloniaUseCompiledBindingsByDefault`); opt-in in 11.x (set the property to `true` or use `x:CompileBindings`). Every `{Binding}` has `x:DataType` in 12
 - [ ] No `INotifyPropertyChanged` storms — verify with Avalonia DevTools
 - [ ] No allocation in `Render()` overrides
 - [ ] Lists ≥100 items virtualized
 - [ ] Images >256 px load via async loader and dispose properly
-- [ ] Scroll stays at 60 fps on a mid-tier machine
+- [ ] Scroll stays at 60 fps on a mid-tier machine (12.1+: apps render at monitor refresh rate on X11/Windows non-default modes — check CPU/GPU at 120/144 Hz)
 - [ ] First-window-shown < 1s after launch (cold start)
 - [ ] No console warnings (`avalonia: WARN ...`) in release build
 
@@ -114,12 +115,13 @@ Run this before merging UI work or cutting a release. Each item maps back to a s
 
 - [ ] Built and tested on Windows
 - [ ] Built and tested on macOS
-- [ ] Built and tested on Linux (X11 and Wayland if applicable)
+- [ ] Built and tested on Linux (X11 and Wayland if applicable). Wayland: via XWayland by default; native Wayland (12.1+, experimental, opt-in via `Avalonia.Wayland` + `.UseWayland()`; `UsePlatformDetect()` does not pick it) only if you enable it explicitly
+- [ ] Linux screen reader (Orca) checked — needs Avalonia 12.0+ (AT-SPI2)
 - [ ] Tested on Avalonia.Mobile (Android/iOS) if app targets mobile
 - [ ] Tested on WASM (browser) if app targets web
 - [ ] Title bar/menu behavior correct per platform (macOS app-menu, Windows custom chrome)
 - [ ] File dialogs use `IStorageProvider` (cross-platform) — not WinForms `OpenFileDialog`
-- [ ] Fonts render correctly on all platforms (variable fonts work; fallbacks provided)
+- [ ] Fonts render correctly on all platforms (static `.ttf`/`.otf` files with fallbacks; variable-font axes are not supported; Type 1 fonts unsupported in 12)
 - [ ] Keyboard shortcuts match platform conventions (`Cmd` on macOS)
 
 ## Final Polish

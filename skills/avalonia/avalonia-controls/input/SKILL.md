@@ -1,6 +1,6 @@
 ---
 name: avalonia-controls-input
-description: Use when working with Avalonia input controls: Button, ToggleButton, RadioButton, CheckBox, TextBox, ComboBox, Slider, Calendar, DatePicker, TimePicker, NumericUpDown, or VirtualKeyboard. Covers key properties, events, binding patterns, and common pitfalls for each control in Avalonia 12.
+description: Use when working with Avalonia input controls: Button, ToggleButton, RadioButton, CheckBox, TextBox, ComboBox, Slider, Calendar, DatePicker, TimePicker, NumericUpDown, or VirtualKeyboard. Covers key properties, events, binding patterns, placeholder text (PlaceholderText in 12, Watermark in 11.x), ToggleButton IsCheckedChanged, touch/pen selection, and common pitfalls for Avalonia 11.3, 12.0 and 12.1.
 ---
 
 # Avalonia Input Controls
@@ -26,6 +26,8 @@ Input controls capture user data or trigger actions. All support `IsEnabled`, `I
 
 **Variants:** `RepeatButton` (fires `Click` repeatedly while held), `ToggleButton` (stateful press)
 
+**ToggleButton / CheckBox / RadioButton state events:** use `IsCheckedChanged` (works in all versions). The `Checked` / `Unchecked` / `Indeterminate` events were **removed in 12.0** — they only exist in 11.x (obsolete there). Or just bind `IsChecked`.
+
 ```xml
 <!-- Simple command button -->
 <Button Content="Save" Command="{Binding SaveCommand}" IsDefault="True"/>
@@ -43,6 +45,16 @@ Input controls capture user data or trigger actions. All support `IsEnabled`, `I
 
 <!-- ToggleButton -->
 <ToggleButton Content="Bold" IsChecked="{Binding IsBold}"/>
+
+<!-- React to state change (all versions). Checked/Unchecked events: (11.x) only -->
+<ToggleButton Content="Bold" IsCheckedChanged="OnBoldChanged"/>
+```
+
+```csharp
+private void OnBoldChanged(object? sender, RoutedEventArgs e)
+{
+    var isOn = ((ToggleButton)sender!).IsChecked == true;
+}
 ```
 
 ---
@@ -98,6 +110,8 @@ public bool? AllSelected
 </StackPanel>
 ```
 
+> **Touch/pen (12.0+):** selection in `ComboBox`, `ListBox`, `TabControl`, `TreeView` happens on pointer **release**, not press. `ListBoxItem`/`TreeViewItem` handle selection themselves — don't intercept selection at the `ItemsControl` level (override `ShouldTriggerSelection` / `UpdateSelectionFromEvent` instead).
+
 > **Tip:** For enum-based selection, bind each `IsChecked` to a converter comparing the enum value, or use `ItemsControl` with `RadioButton` items.
 
 ---
@@ -107,7 +121,9 @@ public bool? AllSelected
 | Property | Type | Notes |
 |---|---|---|
 | `Text` | `string` | TwoWay by default — do **not** add `Mode=TwoWay` |
-| `Watermark` | `string` | Placeholder text |
+| `PlaceholderText` | `string` | Placeholder text **(12.0+)**. `Watermark` is the **(11.x)** name — obsolete in 12 (warns) |
+| `PlaceholderForeground` | `IBrush` | Placeholder color **(12.0+)** (`WatermarkForeground` in 11.x) |
+| `UseFloatingPlaceholder` | `bool` | Placeholder floats above text when focused **(12.0+)** (`UseFloatingWatermark` in 11.x) |
 | `MaxLength` | `int` | 0 = unlimited |
 | `AcceptsReturn` | `bool` | Multiline input |
 | `TextWrapping` | `TextWrapping` | `NoWrap`, `Wrap`, `WrapWithOverflow` |
@@ -121,22 +137,24 @@ public bool? AllSelected
 **Events:** `TextChanged`, `TextChanging`, `LostFocus`, `KeyDown`
 
 ```xml
-<!-- Basic -->
-<TextBox Watermark="Enter name..." Text="{Binding Name}" MaxLength="100"/>
+<!-- Basic (12.0+). In 11.x use Watermark="Enter name..." -->
+<TextBox PlaceholderText="Enter name..." Text="{Binding Name}" MaxLength="100"/>
 
 <!-- Multiline -->
 <TextBox AcceptsReturn="True" TextWrapping="Wrap" Height="120" Text="{Binding Notes}"/>
 
 <!-- Password -->
-<TextBox PasswordChar="•" Watermark="Password" Text="{Binding Password}"/>
+<TextBox PasswordChar="•" PlaceholderText="Password" Text="{Binding Password}"/>
 
 <!-- With inner icon -->
-<TextBox Watermark="Search...">
+<TextBox PlaceholderText="Search..." PlaceholderForeground="Gray" UseFloatingPlaceholder="False">
     <TextBox.InnerLeftContent>
         <PathIcon Data="M15.5 14h-.79l-.28-.27A6.471..." Width="16" Height="16" Margin="4,0"/>
     </TextBox.InnerLeftContent>
 </TextBox>
 ```
+
+> The same `PlaceholderText` / `PlaceholderForeground` pair (12.0+) also exists on `AutoCompleteBox`, `CalendarDatePicker` and `NumericUpDown` (each keeps obsolete `Watermark` / `WatermarkForeground` for 11.x compatibility). `ComboBox` always used `PlaceholderText`.
 
 ---
 
@@ -259,13 +277,15 @@ calendar.BlackoutDates.Add(new CalendarDateRange(DateTime.Today.AddDays(1), Date
 | `SelectedDate` | `DateTimeOffset?` | Note: **not** `DateTime` |
 | `DisplayDateStart` | `DateTimeOffset?` | Earliest selectable |
 | `DisplayDateEnd` | `DateTimeOffset?` | Latest selectable |
-| `Watermark` | `string` | Placeholder |
 | `DayFormat` | `string` | Day display format |
 | `MonthFormat` | `string` | Month display format |
 | `YearFormat` | `string` | Year display format |
 
 ```xml
-<DatePicker SelectedDate="{Binding BirthDate}" Watermark="Select date"/>
+<DatePicker SelectedDate="{Binding BirthDate}"/>
+
+<!-- Placeholder text lives on CalendarDatePicker (12.0+: PlaceholderText, 11.x: Watermark), not DatePicker -->
+<CalendarDatePicker SelectedDate="{Binding DueDate}" PlaceholderText="Pick a date"/>
 
 <!-- Restrict range -->
 <DatePicker SelectedDate="{Binding AppointmentDate}"
@@ -305,5 +325,8 @@ DateTime? date = picker.SelectedDate?.DateTime;
 | All `RadioButton`s in same panel auto-group | Use `GroupName` to separate groups across panels or force cross-panel grouping |
 | `DatePicker.SelectedDate` typed as `DateTime` | It's `DateTimeOffset?` — convert with `.DateTime` |
 | `NumericUpDown.Value` typed as `double` | It's `decimal?` — use `decimal` in ViewModel |
-| `TextBox` binding not updating on every keystroke | Default updates on `LostFocus`; use `UpdateSourceTrigger=PropertyChanged` if needed |
+| `TextBox Watermark="..."` in a 12.x project | Obsolete — use `PlaceholderText` / `UseFloatingPlaceholder` / `PlaceholderForeground`. Keep `Watermark` only in 11.x projects |
+| `ToggleButton.Checked` / `Unchecked` handler doesn't compile in 12 | Removed — use `IsCheckedChanged` or bind `IsChecked` |
+| `DatePicker Watermark` | `DatePicker` has no placeholder property; use `CalendarDatePicker` |
+| `TextBox` binding only updating when focus leaves | Default `UpdateSourceTrigger` is `PropertyChanged` (every keystroke) — check for an explicit `UpdateSourceTrigger=LostFocus` |
 | `PasswordChar` with compiled bindings | No issue, but `Text` binding exposes password in ViewModel — consider `SecureString` patterns |

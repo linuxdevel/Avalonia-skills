@@ -6,7 +6,7 @@ description: Use when writing or reviewing Avalonia XAML markup, .axaml files, X
 # Avalonia XAML
 
 ## Overview
-Avalonia uses `.axaml` extension (not `.xaml`) to avoid Visual Studio WPF tooling conflicts. XAML is optional; full code-only UI is supported. Avalonia 12 enables compiled bindings by default — `x:DataType` is required on root elements where bindings are used.
+Avalonia uses `.axaml` extension (not `.xaml`) to avoid Visual Studio WPF tooling conflicts. XAML is optional; full code-only UI is supported. **(12.0+)** compiled bindings are ON by default (`AvaloniaUseCompiledBindingsByDefault=true`): `{Binding}` maps to `CompiledBinding`, so `x:DataType` is required wherever bindings are used. In 11.x compiled bindings are opt-in (`{CompiledBinding}` / `x:CompileBindings="True"`). Escape hatch: `{ReflectionBinding Path}` or `x:CompileBindings="False"`.
 
 ## File Structure
 
@@ -67,8 +67,9 @@ public partial class MainWindow : Window
 
 | Extension | Purpose | Example |
 |---|---|---|
-| `{Binding}` | Runtime data binding | `Text="{Binding Name}"` |
-| `{CompiledBinding}` | Compile-time checked binding | `Text="{CompiledBinding Name}"` |
+| `{Binding}` | Compiled binding in 12.0+ (needs `x:DataType`); reflection binding in 11.x | `Text="{Binding Name}"` |
+| `{CompiledBinding}` | Explicit compile-time checked binding (all versions) | `Text="{CompiledBinding Name}"` |
+| `{ReflectionBinding}` | Runtime reflection binding; opt-out when no `x:DataType` (12.0+; 11.x: use `{Binding}`) | `Text="{ReflectionBinding Name}"` |
 | `{StaticResource}` | One-time resource lookup | `Fill="{StaticResource AccentBrush}"` |
 | `{DynamicResource}` | Live resource lookup (updates on change) | `Background="{DynamicResource SystemControlBackground}"` |
 | `{x:Static}` | Static field/property | `Value="{x:Static sys:Math.PI}"` |
@@ -86,6 +87,7 @@ public partial class MainWindow : Window
 | `x:Key` | Resource dictionary key | Required for resources in `<ResourceDictionary>` |
 | `x:DataType` | Compiled binding root type | Required on root or `DataTemplate` when using compiled bindings |
 | `x:CompileBindings` | Enable/disable compiled bindings per scope | `x:CompileBindings="False"` to opt out |
+| `ExperimentalAttribute` **(12.0+)** | XAML honors `[Experimental]` on types/members: using them needs the diagnostic suppressed (`<NoWarn>`) | |
 
 ## Code-Behind Pattern
 
@@ -156,11 +158,21 @@ var window = new Window
 Bindings in code:
 
 ```csharp
-var textBox = new TextBox();
+var textBox = new TextBox { DataContext = viewModel };
+// (12.0+) explicit types; `new Binding(...)` is a compat alias of ReflectionBinding
+textBox.Bind(TextBox.TextProperty, new ReflectionBinding(nameof(MainViewModel.Name)));
+textBox.Bind(TextBox.TextProperty, CompiledBinding.Create((MainViewModel vm) => vm.Name)); // (12.0+) AOT/trim safe
+// (11.x)
 textBox.Bind(TextBox.TextProperty, new Binding("Name"));
-// Or with compiled binding (requires source object):
-textBox[!TextBox.TextProperty] = viewModel.WhenAnyValue(x => x.Name)
-    .ToBinding(); // with ReactiveUI
+```
+
+## Gesture Events (12.0+)
+
+Gesture attached events live directly on `InputElement` — drop the `Gestures.` prefix (`Gestures` is no longer public):
+
+```xml
+<Border Pinch="OnPinch" ScrollGesture="OnScroll" Tapped="OnTapped" />
+<!-- (11.x) <Border Gestures.Pinch="OnPinch" Gestures.ScrollGesture="OnScroll" /> -->
 ```
 
 ## Resource Dictionaries
@@ -191,7 +203,8 @@ textBox[!TextBox.TextProperty] = viewModel.WhenAnyValue(x => x.Name)
 | Using `.xaml` extension | Rename to `.axaml` |
 | Missing `xmlns="https://github.com/avaloniaui"` | Add as first attribute on root element |
 | `clr-namespace:` without `;assembly=` for external lib | `xmlns:x="clr-namespace:MyLib;assembly=MyLib"` |
-| Compiled binding error: "Cannot resolve symbol" | Add `x:DataType="vm:MyViewModel"` to root or DataTemplate |
+| Compiled binding error: "Cannot resolve symbol" / `{Binding}` fails to compile after moving to 12 | Add `x:DataType="vm:MyViewModel"` to root or DataTemplate, or use `{ReflectionBinding}` |
+| `Gestures.Pinch="..."` in 12.x | `Pinch="..."` (12.0+) |
 | `x:Name` field not accessible in code-behind | Ensure file is `.axaml` and `InitializeComponent()` is called |
 | `{StaticResource}` not found at runtime | Resource must be defined before use in document order |
 | `{DynamicResource}` for performance-sensitive paths | Use `{StaticResource}` when resource never changes |

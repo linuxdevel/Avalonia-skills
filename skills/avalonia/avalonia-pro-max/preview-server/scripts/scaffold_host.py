@@ -8,7 +8,15 @@ to render Avalonia variant XAML to PNG via Avalonia.Headless + Skia.
 Idempotent — safe to re-run. Skips if the project already exists with a valid csproj.
 
 Usage:
-    python3 scaffold_host.py [--root <project_root>] [--avalonia-version 12.0.0] [--force]
+    python3 scaffold_host.py [--root <project_root>] [--avalonia-version 12.1.4]
+                             [--target-framework net10.0] [--force]
+
+Version handling:
+  - Default Avalonia is 12.1.4 on net10.0 (net8.0 also works with Avalonia 12).
+  - Avalonia 12.x: adds Avalonia.HarfBuzz and calls UseHarfBuzz() after UseSkia()
+    (required by 12 when UseSkia() is explicit), and uses WindowDecorations.
+  - Avalonia 11.x (e.g. --avalonia-version 11.3.22): defaults to net8.0, no HarfBuzz
+    package, and uses SystemDecorations.
 """
 from __future__ import annotations
 
@@ -18,14 +26,23 @@ import sys
 import textwrap
 from pathlib import Path
 
-DEFAULT_AVALONIA_VERSION = "12.0.0"
+DEFAULT_AVALONIA_VERSION = "12.1.4"
+DEFAULT_TFM_12 = "net10.0"
+DEFAULT_TFM_11 = "net8.0"
+
+
+def _major(version: str) -> int:
+    try:
+        return int(version.split(".", 1)[0])
+    except ValueError:
+        return 12
 
 CSPROJ_TEMPLATE = """\
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>{tfm}</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -38,7 +55,7 @@ CSPROJ_TEMPLATE = """\
     <PackageReference Include="Avalonia" Version="{ver}" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="{ver}" />
     <PackageReference Include="Avalonia.Skia" Version="{ver}" />
-    <PackageReference Include="Avalonia.Headless" Version="{ver}" />
+{harfbuzz}    <PackageReference Include="Avalonia.Headless" Version="{ver}" />
     <PackageReference Include="Avalonia.Desktop" Version="{ver}" />
   </ItemGroup>
 
@@ -108,7 +125,7 @@ public static class Program
             .Configure<App>()
             .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
             .UseSkia()
-            .SetupWithoutStarting();
+{use_harfbuzz}            .SetupWithoutStarting();
 
         return Dispatcher.UIThread.Invoke(() =>
         {
@@ -126,7 +143,7 @@ public static class Program
                 {
                     Width = opts.Width,
                     Height = opts.Height,
-                    SystemDecorations = SystemDecorations.None,
+                    {decorations},
                     Content = content
                 };
                 window.Show();
@@ -217,12 +234,39 @@ PLACEHOLDER_SCENE = """\
 """
 
 
+def render_csproj(version: str, tfm: str) -> str:
+    harfbuzz = ""
+    if _major(version) >= 12:
+        harfbuzz = f'    <PackageReference Include="Avalonia.HarfBuzz" Version="{version}" />\n'
+    return (CSPROJ_TEMPLATE
+            .replace("{ver}", version)
+            .replace("{tfm}", tfm)
+            .replace("{harfbuzz}", harfbuzz))
+
+
+def render_program(version: str) -> str:
+    if _major(version) >= 12:
+        use_harfbuzz = "            .UseHarfBuzz()\n"
+        decorations = "WindowDecorations = WindowDecorations.None"
+    else:
+        use_harfbuzz = ""
+        decorations = "SystemDecorations = SystemDecorations.None"
+    return (PROGRAM_CS
+            .replace("{use_harfbuzz}", use_harfbuzz)
+            .replace("{decorations}", decorations))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Scaffold the Avalonia preview host project.")
     parser.add_argument("--root", default=".", help="Project root (defaults to cwd)")
     parser.add_argument("--avalonia-version", default=DEFAULT_AVALONIA_VERSION)
+    parser.add_argument("--target-framework", default=None,
+                        help="Override TargetFramework (default: net10.0 for Avalonia 12.x, net8.0 for 11.x)")
     parser.add_argument("--force", action="store_true", help="Overwrite existing files")
     args = parser.parse_args()
+
+    tfm = args.target_framework or (
+        DEFAULT_TFM_12 if _major(args.avalonia_version) >= 12 else DEFAULT_TFM_11)
 
     root = Path(args.root).resolve()
     host = root / ".preview" / "AvaloniaPreviewHost"
@@ -237,10 +281,10 @@ def main() -> int:
     (host / "Variant").mkdir(exist_ok=True)
 
     files = {
-        csproj:                       CSPROJ_TEMPLATE.format(ver=args.avalonia_version),
+        csproj:                       render_csproj(args.avalonia_version, tfm),
         host / "App.axaml":           APP_AXAML,
         host / "App.axaml.cs":        APP_AXAML_CS,
-        host / "Program.cs":          PROGRAM_CS,
+        host / "Program.cs":          render_program(args.avalonia_version),
         host / "app.manifest":        APP_MANIFEST,
         host / "Variant" / "Resources.axaml":     PLACEHOLDER_RESOURCES,
         host / "Variant" / "Styles.axaml":        PLACEHOLDER_STYLES,

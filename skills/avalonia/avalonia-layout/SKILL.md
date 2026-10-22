@@ -49,7 +49,7 @@ Avalonia layout uses a two-pass measure/arrange system. Every control has `Margi
     </ScrollViewer>
 
     <!-- Footer spans full width -->
-    <StatusBar Grid.Row="2" Grid.ColumnSpan="2"/>
+    <Border Grid.Row="2" Grid.ColumnSpan="2" Padding="8,4"/> <!-- no built-in StatusBar control; use Border/StackPanel -->
 
 </Grid>
 ```
@@ -125,7 +125,7 @@ Keeps columns at equal widths across separate Grids:
 </StackPanel>
 ```
 
-`Spacing` was added in Avalonia 11. Do not use `Margin` on each child for spacing — use `Spacing` on the panel.
+`Spacing` works in 11.3, 12.0 and 12.1. Do not use `Margin` on each child for spacing — use `Spacing` on the panel.
 
 ## DockPanel
 
@@ -138,9 +138,9 @@ Keeps columns at equal widths across separate Grids:
     </Menu>
 
     <!-- Bottom status bar -->
-    <StatusBar DockPanel.Dock="Bottom">
+    <Border DockPanel.Dock="Bottom" Padding="8,4"> <!-- no built-in StatusBar control -->
         <TextBlock Text="Ready"/>
-    </StatusBar>
+    </Border>
 
     <!-- Left sidebar -->
     <TreeView DockPanel.Dock="Left" Width="200"/>
@@ -227,24 +227,26 @@ Avoid setting both `Width` and `HorizontalAlignment="Stretch"` — they conflict
 </Grid>
 ```
 
-### Adaptive Layout with ContainerQuery (Avalonia 12)
+### Adaptive Layout with ContainerQuery (11.x and 12.x)
+
+Mark a container, then host a `ContainerQuery` (not nested inside a `Style`) in an ancestor's `Styles`. Styles inside can't affect the container or its ancestors.
 
 ```xml
 <Grid>
     <Grid.Styles>
-        <Style Selector="Grid">
-            <Style.Resources>
-                <ControlTheme x:Key="AdaptiveLayout" TargetType="Grid">
-                    <!-- Wide: two columns -->
-                    <Setter Property="ColumnDefinitions" Value="*,*"/>
-                </ControlTheme>
-            </Style.Resources>
-        </Style>
+        <ContainerQuery Name="host" Query="max-width:600">
+            <Style Selector="UniformGrid#cards">
+                <Setter Property="Columns" Value="1"/>
+            </Style>
+        </ContainerQuery>
     </Grid.Styles>
+    <Border Container.Name="host" Container.Sizing="Width">
+        <UniformGrid x:Name="cards" Columns="3"/>
+    </Border>
 </Grid>
 ```
 
-For truly responsive behavior, use code-behind or reactive bindings that respond to `Bounds` changes:
+For logic that styles can't express, react to `Bounds` changes in code:
 
 ```csharp
 // In code-behind
@@ -273,6 +275,12 @@ this.GetObservable(BoundsProperty)
     </StackPanel>
 </ScrollViewer>
 ```
+
+## Version Notes
+- Layout panels/Grid/StackPanel APIs are unchanged between 11.3 and 12.x.
+- **(12.0+)** Layoutable `Thickness` properties (`Margin`, `Padding`, ...) reject NaN/infinite values. `TextBlock` no longer rounds its size when `UseLayoutRounding=false`.
+- **(12.0+)** `LayoutManager` class removed (→ `ILayoutManager`); `ILayoutRoot` removed. Don't cast the root visual to `TopLevel` — use `TopLevel.GetTopLevel(visual)`.
+- **(12.0+)** `Layoutable.GetMaxSizeFromConstraint` is protected (override in custom panels/controls).
 
 ## Common Mistakes
 

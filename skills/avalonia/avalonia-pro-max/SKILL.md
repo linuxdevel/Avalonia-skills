@@ -9,7 +9,11 @@ description: Use when designing or polishing the visual quality of an Avalonia a
 
 `avalonia` skills teach you the framework. `avalonia-pro-max` teaches you to make it **look and feel professional**: design tokens, theme selection, component recipes, motion, accessibility, responsive layout, icons, and final QA.
 
-This skill is the desktop/cross-platform counterpart to `ui-ux-pro-max`. Same priorities, but every rule is mapped to Avalonia 12 (XAML, FluentTheme, ControlThemes, pseudoclasses, AutomationProperties, etc.).
+This skill is the desktop/cross-platform counterpart to `ui-ux-pro-max`. Same priorities, but every rule is mapped to Avalonia 12.x (XAML, FluentTheme, ControlThemes, pseudoclasses, AutomationProperties, etc.).
+
+## Avalonia Versions
+
+Supports Avalonia 11.3, 12.0 and 12.1 (latest 12.1.4). Detect the project's version first and use the `avalonia-versions` skill (version matrix, renamed APIs, label convention). In these sub-skills: **(12.0+)** / **(12.1+)** = needs that version or newer, **(11.x)** = 11.x only (removed/obsolete in 12), no label = works in 11.3, 12.0 and 12.1. Never mix 11.x and 12.x APIs. No project yet → 12.1.x on `net10.0`.
 
 ## When to Use
 
@@ -82,7 +86,7 @@ Same global priority as `ui-ux-pro-max`, mapped to Avalonia:
 |---|---|---|---|
 | 1 | Accessibility | `AutomationProperties.*`, focus pseudoclasses, contrast | `accessibility` |
 | 2 | Touch & interaction | Min hit-target via `Padding`/`MinHeight`, `:pointerover` / `:pressed` styles | `components`, `motion` |
-| 3 | Performance | `CompiledBinding`, virtualization (`VirtualizingStackPanel`), `RenderOptions.BitmapInterpolationMode` | `components`, `layout-patterns` |
+| 3 | Performance | `CompiledBinding` (default in 12.0+, opt-in in 11.x), virtualization (`VirtualizingStackPanel`), `RenderOptions.BitmapInterpolationMode` | `components`, `layout-patterns` |
 | 4 | Style selection | Theme library + ControlTheme + Style classes | `themes`, `design-system` |
 | 5 | Layout & responsive | Grid `*` / `Auto`, `AdaptiveLayout`, `NavigationView.PaneDisplayMode` | `layout-patterns` |
 | 6 | Typography & color | Theme-variant dictionaries, `DynamicResource`, type ramp | `design-system` |
@@ -105,9 +109,9 @@ A pragmatic starter pack that yields a polished app with minimal effort:
 ```
 
 NuGet:
-- `Avalonia` 12.x
+- `Avalonia` 12.1.x (or the project's version)
 - `Avalonia.Themes.Fluent` (or `SukiUI` / `Semi.Avalonia`)
-- `FluentAvalonia` — NavigationView, InfoBar, TeachingTip
+- `FluentAvaloniaUI` (3.x for Avalonia 12, 2.5.x for 11.3) — NavigationView, InfoBar, TeachingTip
 - `Lucide.Avalonia` or `Material.Icons.Avalonia` — icons
 - `Svg.Skia` — vector assets
 - `Avalonia.Xaml.Behaviors` — declarative event triggers

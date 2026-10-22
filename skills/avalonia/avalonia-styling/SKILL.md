@@ -77,6 +77,8 @@ Custom pseudoclass in code-behind or ViewModel:
 PseudoClasses.Set(":loading", isLoading);
 ```
 
+The extension class was renamed `PseudolassesExtensions` → `PseudoClassesExtensions` **(12.0+)** (typo fix; only matters for explicit static calls, e.g. `PseudoClassesExtensions.Set(classes, ":x", true)`).
+
 Then target in XAML:
 ```xml
 <Style Selector="local|MyControl:loading">
@@ -250,6 +252,11 @@ public class MyButton : Button
 
 Useful when subclassing a control only for behavior changes, not visual identity.
 
+`IStyleable` (with its explicit `StyleKey` implementation) was removed in 12 — use `StyleKeyOverride` / `StyledElement`:
+```csharp
+// (11.x only, removed in 12.0)  class MyButton : Button, IStyleable { Type IStyleable.StyleKey => typeof(Button); }
+```
+
 ---
 
 ## ContainerQuery (Responsive Styles)
@@ -266,6 +273,14 @@ Useful when subclassing a control only for behavior changes, not visual identity
     </Style>
 </Style>
 ```
+
+---
+
+## Limitations in 12
+
+- **(12.0+)** `Window.WindowState` is a direct property, **not styleable** — `<Setter Property="WindowState" .../>` no longer works. Set it in code/XAML attribute or bind it.
+- **(12.0+)** Style-triggered animations stop on hidden controls; add `Animation.PlaybackBehavior="Always"` to keep running (see avalonia-graphics-animation).
+- Theme variants (`RequestedThemeVariant`, `ThemeDictionaries`, `ThemeVariant`), `ControlTheme`, `BasedOn`, `ContainerQuery`: unchanged in 11.3/12.x.
 
 ---
 
@@ -316,6 +331,7 @@ Useful when subclassing a control only for behavior changes, not visual identity
 
 - **Using WPF `Triggers`** — does not exist in Avalonia. Use pseudoclasses + nested styles instead.
 - **Forgetting `^` in nested selectors** — `<Style Selector=":pointerover">` inside another Style does not scope to the parent; must be `<Style Selector="^:pointerover">`.
+- **Styling `Window.WindowState` (12.0+)** — direct property, not settable from a Style; set directly.
 - **Putting ControlTheme in `Window.Styles`** — ControlThemes must go in `Window.Resources` or `Application.Resources`, not `Styles`.
 - **Using `StaticResource` for theme-variant resources** — theme variant resources must be referenced with `DynamicResource` to react to variant changes at runtime.
 - **Confusing Styles and ControlThemes** — Styles add/override individual property values; ControlThemes replace the entire visual template. If you only need color or font changes, use a Style.

@@ -45,17 +45,17 @@ The user never has to install anything beyond what's already needed for Avalonia
 
 ## Prerequisites
 
-- .NET 8 / 9 SDK (Avalonia 12 target)
+- .NET SDK matching the host target framework: .NET 10 SDK for the default 12.x host (`net10.0`), or .NET 8 SDK with `--target-framework net8.0` (supported by Avalonia 12). Avalonia 11.3: pass `--avalonia-version 11.3.22` (defaults to `net8.0`)
 - Python 3.8+ (for the gallery server)
 - A scratch project at `.preview/AvaloniaPreviewHost/` — the agent creates this on first use
 
 The scratch project is a bare Avalonia console app referencing:
-- `Avalonia` 12.x
+- `Avalonia` 12.1.x (default 12.1.4; `--avalonia-version` overrides, 11.3.x also supported)
 - `Avalonia.Themes.Fluent`
 - `Avalonia.Headless`
-- `Avalonia.Skia` (transitively required by Headless for image output)
+- `Avalonia.Skia` + `Avalonia.HarfBuzz` (12.x: `UseSkia()` must be followed by `UseHarfBuzz()`, otherwise startup throws "No text shaping system configured")
 
-Optional packages added per variant if it uses them: `FluentAvalonia`, `SukiUI`, `Semi.Avalonia`, `Material.Avalonia`, `Lucide.Avalonia`, `Material.Icons.Avalonia`, `Svg.Skia`.
+Optional packages added per variant if it uses them: `FluentAvaloniaUI`, `SukiUI`, `Semi.Avalonia`, `Material.Avalonia`, `Lucide.Avalonia`, `Material.Icons.Avalonia`, `Svg.Skia`.
 
 ## Variant generation rules
 

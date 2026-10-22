@@ -153,6 +153,27 @@ Usage:
 </Style>
 ```
 
+### Labeled section (GroupBox, 12.0+)
+
+For a titled group of related controls (settings groups, filter panels) use the built-in `GroupBox` instead of a hand-built `Border` + header `TextBlock`. It is a `HeaderedContentControl` (`Header`, `Content`) that you can style via `Border.card`-style tokens:
+
+```xml
+<GroupBox Header="Notifications">
+  <StackPanel Spacing="{StaticResource Space2}">
+    <CheckBox Content="Email"/>
+    <CheckBox Content="Push"/>
+  </StackPanel>
+</GroupBox>
+```
+
+In 11.3 `GroupBox` does not exist — keep the `Border.card` + header `TextBlock` pattern above (or a FluentAvalonia/third-party equivalent).
+
+---
+
+## Read-only Table (TableView, 12.1+)
+
+For read-only tabular data in 12.1+, prefer the built-in `TableView` (`Avalonia.Controls`, derives from `ListBox`, virtualized, `Columns`, `CanUserResizeColumns`, bound via `ItemsSource`) over `DataGrid`. `DataGrid` (`Avalonia.Controls.DataGrid`) is in maintenance mode in 12.x. Use `DataGrid` (or `TreeDataGrid`) when you need editing, sorting UI or hierarchy, and in 11.3/12.0 where `TableView` does not exist. Check the TableView docs (https://docs.avaloniaui.net) for current column element names before writing column XAML. Style it with the same tokens as lists: row height >= 36 px, `Border` header with `TextMutedBrush`, 1 px row separators, no zebra striping unless the data is wide.
+
 ---
 
 ## Sidebar Navigation (FluentAvalonia NavigationView)
@@ -226,6 +247,8 @@ For non-FluentAvalonia apps, build a sidebar with `SplitView`:
 
 ## App Shell (Title bar + sidebar + content)
 
+Version notes: `ExtendClientAreaToDecorationsHint` / `ExtendClientAreaTitleBarHeightHint` below work in 11.x and 12.x (on Windows 12.0+ the old margin-when-maximized workarounds must be removed). `ExtendClientAreaChromeHints` is removed in 12 and `SystemDecorations` is replaced by `WindowDecorations` — see `layout-patterns` (Window Chrome).
+
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
         ExtendClientAreaToDecorationsHint="True"
@@ -289,7 +312,7 @@ For destructive actions, style the primary button with the danger class via `Pri
     <TextBlock Text="Email" Classes="label"/>
     <TextBox Text="{Binding Email, Mode=TwoWay,
                             UpdateSourceTrigger=LostFocus}"
-             Watermark="you@example.com"/>
+             PlaceholderText="you@example.com"/>  <!-- (12.0+); use Watermark="..." (11.x) in 11.3 projects -->
     <TextBlock Text="{Binding EmailError}"
                IsVisible="{Binding HasEmailError}"
                Classes="error"/>
@@ -459,5 +482,6 @@ Use Ursa.Avalonia's `Skeleton` control if you depend on Ursa.
 - **`Padding="10"` on an icon-only button** — total target shrinks below 36px, fails 44pt accessibility on touch.
 - **Forgetting `AutomationProperties.Name` on icon-only buttons** — screen readers announce nothing.
 - **Validating with red-only feedback** — combine `:error` border with helper text.
+- **Using `Watermark` in a 12.x project** — obsolete; use `PlaceholderText` (12.0+) and `PlaceholderForeground` (12.0+, TextBox/AutoCompleteBox/CalendarDatePicker/NumericUpDown) to tint it from tokens.
 - **Cards stacked at the same elevation** — use `ShadowSm` or 1px border, not `ShadowLg`, for in-page cards.
 - **Using `ContentDialog` for non-blocking info** — use a toast/notification instead.

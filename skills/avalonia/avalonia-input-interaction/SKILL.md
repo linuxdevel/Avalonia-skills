@@ -1,11 +1,15 @@
 ---
 name: avalonia-input-interaction
-description: Use when handling pointer events, keyboard input, gestures, focus, drag-and-drop, or hot keys in Avalonia. Covers PointerPressed/Released/Moved, KeyDown/KeyUp, TextInput, HotKeyManager, KeyGesture, focus management, TapGestureRecognizer, PinchGestureRecognizer, DragDrop.DoDragDrop, DataObject, and Cursor types.
+description: Use when handling pointer events, keyboard input, gestures, focus, drag-and-drop, or hot keys in Avalonia 11.3/12.x. Covers PointerPressed/Released/Moved, KeyDown/KeyUp, TextInput, HotKeyManager, KeyGesture, focus management and Focus Traversal (12.0+), gesture events and recognizers, drag-and-drop (DragDrop.DoDragDropAsync, DataTransfer, DataFormat; 11.x DataObject), and Cursor types.
 ---
 # Avalonia Input & Interaction
 
+Version labels: see `avalonia-versions`. **(12.0+)** = 12.x only, **(11.x)** = 11.x only, unlabeled = all.
+
 ## Overview
 All input routes as routed events (bubbling by default, tunneling with "Preview" prefix). Pointer events are unified across mouse, touch, and stylus.
+
+**(12.0+) Touch/pen select and focus on pointer release**, not press (mouse unchanged). `ListBoxItem`/`TreeViewItem` handle selection themselves. Access keys (`_Save`) match the symbol printed on the key (accents, digits); `AccessText.AccessKey` is `string?`.
 
 ## Pointer Events
 
@@ -110,13 +114,11 @@ HotKeyManager.SetHotKey(myControl, null);
 
 ```csharp
 // Programmatic focus
-myControl.Focus();
+myControl.Focus(NavigationMethod.Tab);
 
 // Via FocusManager
 var fm = TopLevel.GetTopLevel(this)?.FocusManager;
 fm?.Focus(myControl, NavigationMethod.Tab);
-
-// Get currently focused element
 var focused = fm?.GetFocusedElement();
 ```
 
@@ -124,8 +126,26 @@ XAML focus control:
 ```xml
 <TextBox IsTabStop="False"/>           <!-- exclude from tab order -->
 <TextBox TabIndex="2"/>                <!-- explicit tab order -->
-<TextBox AutoFocus="True"/>            <!-- focus on load (Avalonia 11.1+) -->
 ```
+There is no `AutoFocus` property; call `Focus()` after attach (e.g. in `Loaded`/`OnAttachedToVisualTree`) or use `FocusManager`.
+
+**(12.0+) Focus Traversal API** — `IFocusManager` is public and manages all focus:
+```csharp
+fm.TryMoveFocus(NavigationDirection.Next);                       // bool
+var next = fm.FindNextElement(NavigationDirection.Next);         // IInputElement? (options: FindNextElementOptions)
+var first = fm.FindFirstFocusableElement();
+var last  = fm.FindLastFocusableElement();
+```
+(11.x) `KeyboardNavigationHandler.GetNext` — removed in 12.
+
+**(12.0+) Cancellable focus** — `GettingFocus` / `LosingFocus` use `FocusChangingEventArgs`:
+```csharp
+myBox.LosingFocus += (s, e) =>
+{
+    if (!IsValid()) e.TryCancel();            // or e.TrySetNewFocusedElement(otherControl)
+};
+```
+`GotFocus` / `LostFocus` use **(12.0+)** `FocusChangedEventArgs` (`OldFocusedElement`, `NewFocusedElement`, `NavigationMethod`, `KeyModifiers`); **(11.x)** `GotFocusEventArgs`.
 
 Pseudoclasses for styling:
 ```xml
@@ -144,63 +164,65 @@ Focus scope (contains Tab navigation):
 </Panel>
 ```
 
-## Gesture Recognizers
+## Gestures
 
-Add to any `InputElement.GestureRecognizers`:
+`Tapped`, `RightTapped`, `DoubleTapped`, `Holding` are events on `InputElement`. Touch gestures are raised by recognizers added to `GestureRecognizers` (e.g. `PinchGestureRecognizer`, `ScrollGestureRecognizer`, `PullGestureRecognizer`) and handled as routed events on the element:
 ```xml
-<Border Background="LightBlue" Width="200" Height="200">
+<!-- (12.0+) events directly on InputElement -->
+<Border Pinch="OnPinch" PinchEnded="OnPinchEnded">
     <Border.GestureRecognizers>
-        <TapGestureRecognizer Tapped="OnTapped"/>
-        <PinchGestureRecognizer PinchUpdated="OnPinchUpdated"/>
+        <PinchGestureRecognizer/>
     </Border.GestureRecognizers>
 </Border>
+<!-- (11.x) Gestures.Pinch="OnPinch" Gestures.PinchEnded="OnPinchEnded" -->
 ```
 
 ```csharp
-private void OnPinchUpdated(object? sender, PinchEventArgs e)
+private void OnPinch(object? sender, PinchEventArgs e)
 {
     _scale *= e.Scale;
     myBorder.RenderTransform = new ScaleTransform(_scale, _scale);
 }
 ```
 
-| Recognizer | Events |
+| Event (on `InputElement`) | Args |
 |---|---|
-| `TapGestureRecognizer` | `Tapped` |
-| `DoubleTapGestureRecognizer` | `DoubleTapped` |
-| `PinchGestureRecognizer` | `PinchUpdated`, `PinchEnded` |
-| `PullGestureRecognizer` | `PullDelta`, `PullEnded` |
-| `ScrollGestureRecognizer` | `ScrollGesture`, `ScrollGestureEnded`, `ScrollGestureInertiaStarting` |
+| `Pinch`, `PinchEnded` | `PinchEventArgs`, `PinchEndedEventArgs` |
+| `PullGesture`, `PullGestureEnded` | `PullGestureEventArgs`, `PullGestureEndedEventArgs` |
+| `ScrollGesture`, `ScrollGestureInertiaStarting`, `ScrollGestureEnded` | `ScrollGesture*EventArgs` |
+| `SwipeGesture`, `SwipeGestureEnded` | `SwipeGestureEventArgs`, `SwipeGestureEndedEventArgs` |
+| `PointerTouchPadGestureMagnify/Rotate/Swipe` | `PointerDeltaEventArgs` |
 
 ## Drag and Drop
 
-Source (initiates drag):
+**(12.0+)** Source (initiates drag):
 ```csharp
 private async void OnPointerPressed(object? sender, PointerPressedEventArgs e)
 {
-    var data = new DataObject();
-    data.Set(DataFormats.Text, "dragged text");
-    data.Set("custom/format", myObject);
+    var item = DataTransferItem.CreateText("dragged text");
+    var myFormat = DataFormat.CreateInProcessFormat<MyType>("myapp/mytype");
+    item.Set(myFormat, myObject);                 // extra in-process format on same item
 
-    var result = await DragDrop.DoDragDrop(e, data,
+    var data = new DataTransfer();
+    data.Add(item);
+
+    var result = await DragDrop.DoDragDropAsync(e, data,
         DragDropEffects.Copy | DragDropEffects.Move);
-    // result: DragDropEffects indicating what happened
 }
 ```
 
 Target (receives drop):
 ```xml
 <Border DragDrop.AllowDrop="True"
-        Drop="OnDrop"
-        DragOver="OnDragOver"
-        DragEnter="OnDragEnter"
-        DragLeave="OnDragLeave"/>
+        DragDrop.Drop="OnDrop" DragDrop.DragOver="OnDragOver"
+        DragDrop.DragEnter="OnDragEnter" DragDrop.DragLeave="OnDragLeave"/>
 ```
 
 ```csharp
+// (12.0+)
 private void OnDragOver(object? sender, DragEventArgs e)
 {
-    e.DragEffects = e.Data.Contains(DataFormats.Text)
+    e.DragEffects = e.DataTransfer.Contains(DataFormat.Text)
         ? DragDropEffects.Copy
         : DragDropEffects.None;
     e.Handled = true;
@@ -208,20 +230,21 @@ private void OnDragOver(object? sender, DragEventArgs e)
 
 private void OnDrop(object? sender, DragEventArgs e)
 {
-    if (e.Data.Contains(DataFormats.Text))
-    {
-        var text = e.Data.GetText();
-        // use text
-    }
-    if (e.Data.Contains(DataFormats.Files))
-    {
-        var files = e.Data.GetFiles();
-        // IEnumerable<IStorageItem>
-    }
+    var text = e.DataTransfer.TryGetText();               // string?
+    var files = e.DataTransfer.TryGetFiles();             // IStorageItem[]?
+    var mine = e.DataTransfer.TryGetValue(myFormat);      // DataFormat<T> where T : class
 }
 ```
+Built-in `DataFormat`: `Text`, `Bitmap`, `File`. Custom: `DataFormat.CreateStringApplicationFormat(id)`, `CreateBytesApplicationFormat(id)`, `CreateInProcessFormat<T>(id)`.
 
-Built-in `DataFormats`: `Text`, `Files`, `FileNames`
+**(11.x)** equivalent — do not use in 12:
+```csharp
+var data = new DataObject();
+data.Set(DataFormats.Text, "dragged text");
+var result = await DragDrop.DoDragDrop(e, data, DragDropEffects.Copy);
+// target: e.Data.Contains(DataFormats.Text), e.Data.GetText(), e.Data.GetFiles()
+// DataFormats: Text, Files, FileNames
+```
 
 ## Cursor
 
@@ -252,8 +275,11 @@ myControl.PointerWheelChanged += (s, e) =>
 ## Common Mistakes
 
 - **Not setting `e.Handled = true`** on `KeyDown` — event bubbles to parent; `TextBox` will still consume keys
-- **`DragDrop.DoDragDrop` must be called on pointer event** — calling after `await` loses the pointer event context
+- **`DragDrop.DoDragDropAsync` (11.x: `DoDragDrop`) must be called from the pointer event handler** — calling after `await` loses the pointer event context
 - **`Focus()` before control is attached to visual tree** — silently does nothing; call in `OnAttachedToVisualTree` or later
-- **Gesture recognizers vs. events** — `Tapped`/`DoubleTapped` fire on `InputElement` directly; `TapGestureRecognizer` needed only for custom gesture behavior
+- **Gesture recognizers vs. events** — `Tapped`/`DoubleTapped` fire on `InputElement` directly, no recognizer needed; touch gestures (`Pinch`, `ScrollGesture`) need the matching recognizer in `GestureRecognizers`
+- **(12.0+) `Gestures.Pinch` prefix** — removed; use `Pinch="..."` directly. `Gestures` is no longer public
+- **(12.0+) Using `DataObject`/`DataFormats`/`e.Data`** — gone; use `DataTransfer`/`DataFormat`/`e.DataTransfer`
+- **(12.0+) Selection on touch fires on release** — don't rely on `PointerPressed` to select for touch/pen
 - **`DragDrop.AllowDrop` is an attached property** — must be set on the drop target, not a parent
 - **`PointerPressed` fires before `Tapped`** — don't handle both if one is sufficient

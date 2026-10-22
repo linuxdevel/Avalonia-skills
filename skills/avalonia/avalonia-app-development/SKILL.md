@@ -10,7 +10,8 @@ Avalonia app entry: `Program.cs` builds and runs an `AppBuilder`. `App.axaml` + 
 ## Program.cs
 ```csharp
 using Avalonia;
-using Avalonia.ReactiveUI; // or remove if not using ReactiveUI
+// using ReactiveUI.Avalonia;  // (12.0+) ReactiveUI.Avalonia package — only if using ReactiveUI
+// using Avalonia.ReactiveUI;  // (11.x) Avalonia.ReactiveUI package, last release 11.3.x
 
 class Program
 {
@@ -23,9 +24,13 @@ class Program
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace();
-            // .UseReactiveUI() // add if using ReactiveUI
+            // .UseReactiveUI(_ => { }).RegisterReactiveUIViewsFromEntryAssembly() // (12.0+) ReactiveUI.Avalonia
+            // .UseReactiveUI() // (11.x) Avalonia.ReactiveUI
 }
 ```
+`UsePlatformDetect()` configures Skia + HarfBuzz. With explicit `.UseSkia()` in 12, also call `.UseHarfBuzz()` (`Avalonia.HarfBuzz` package) or startup throws `No text shaping system configured`. (12.0+)
+
+Dev tools: `Avalonia.Diagnostics` + `AttachDevTools()` (11.x) → `AvaloniaUI.DiagnosticsSupport` package + `AttachDeveloperTools()` in `App.OnFrameworkInitializationCompleted` (12.0+).
 
 ## App.axaml
 ```xml
@@ -65,7 +70,11 @@ public partial class App : Application
                 DataContext = new MainViewModel()
             };
         }
-        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
+        else if (ApplicationLifetime is IActivityApplicationLifetime activity) // (12.0+) Android
+        {
+            activity.MainViewFactory = () => new MainView { DataContext = new MainViewModel() };
+        }
+        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView) // iOS, Browser (and Android in 11.x)
         {
             singleView.MainView = new MainView
             {
@@ -76,12 +85,30 @@ public partial class App : Application
     }
 }
 ```
+Check `IActivityApplicationLifetime` **before** `ISingleViewApplicationLifetime`. In 11.x omit the activity branch (`IActivityApplicationLifetime` does not exist).
+
+### Android entry (12.0+)
+```csharp
+[Activity(Label = "MyApp", Theme = "@style/MyTheme.NoActionBar", MainLauncher = true,
+    ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode)]
+public class MainActivity : AvaloniaMainActivity { }
+
+[Application]
+public class AndroidApp : AvaloniaAndroidApplication<App>
+{
+    protected AndroidApp(IntPtr javaReference, JniHandleOwnership transfer)
+        : base(javaReference, transfer) { }
+    // builder customization (e.g. AndroidPlatformOptions): override CustomizeAppBuilder here
+}
+```
+(11.x) `public class MainActivity : AvaloniaMainActivity<App>` with `CustomizeAppBuilder(AppBuilder)` override in the activity; no `[Application]` class. `CreateAppBuilder`/`CustomizeAppBuilder` on `AvaloniaMainActivity` are removed in 12 — move logic to the `AvaloniaAndroidApplication<TApp>` subclass or `App`.
 
 ## Application Lifetimes
 | Lifetime | Interface | Platforms |
 |---|---|---|
 | Classic Desktop | `IClassicDesktopStyleApplicationLifetime` | Windows, macOS, Linux |
-| Single View | `ISingleViewApplicationLifetime` | iOS, Android, WASM |
+| Activity | `IActivityApplicationLifetime` (`MainViewFactory`) (12.0+) | Android |
+| Single View | `ISingleViewApplicationLifetime` | iOS, WASM (also Android in 11.x) |
 | Lifetime-less | None | Headless testing |
 
 ## Resource Dictionaries
@@ -164,7 +191,11 @@ MyApp.Core/              — Shared ViewModels/Models
 - **AsyncImageLoader.Avalonia** — async image loading from web for Image controls (`AsyncImageLoader.Avalonia`)
 
 ## Common Mistakes
-- Using `StartWithClassicDesktopLifetime` for mobile/WASM (must use `ISingleViewApplicationLifetime`)
+- Using `StartWithClassicDesktopLifetime` for mobile/WASM (use `IActivityApplicationLifetime` on Android 12+, `ISingleViewApplicationLifetime` on iOS/Browser)
+- Android 12+: still using `AvaloniaMainActivity<App>` / `CustomizeAppBuilder` on the activity / `singleView.MainView` — silently no main view or build errors
+- Keeping `Avalonia.ReactiveUI` or `Avalonia.Diagnostics` after upgrading to 12 — packages end at 11.3.x; use `ReactiveUI.Avalonia` / `AvaloniaUI.DiagnosticsSupport`
+- Explicit `UseSkia()` without `UseHarfBuzz()` in 12 — startup exception
+- `new DispatcherTimer()` created off the UI thread in 12 — binds to the current thread's dispatcher; create on UI thread or pass the dispatcher
 - `AvaloniaXamlLoader.Load(this)` missing in `Initialize()` — styles and resources not loaded
 - Using `StaticResource` for `ThemeVariant`-sensitive resources — dark mode won't update
 - Asset path casing mismatch on Linux (`Assets/Logo.png` vs `assets/logo.png`)

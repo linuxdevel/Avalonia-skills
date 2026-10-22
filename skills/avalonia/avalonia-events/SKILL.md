@@ -10,7 +10,7 @@ Avalonia uses routed events that travel the logical tree. Three strategies:
 - **Tunnel** — root → source (`Preview` prefix by convention)
 - **Direct** — only raised on source element
 
-All input events (`PointerPressed`, `KeyDown`, etc.) are routed.
+All input events (`PointerPressed`, `KeyDown`, etc.) are routed. Version labels: see `avalonia-versions`.
 
 ## Handling Events
 
@@ -192,6 +192,24 @@ private void OnChildButtonClicked(RoutedEventArgs e)
 }
 ```
 
+## Focus and Gesture Events
+
+```csharp
+// (12.0+) FocusChangedEventArgs: OldFocusedElement, NewFocusedElement, NavigationMethod, KeyModifiers
+private void OnGotFocus(object? sender, FocusChangedEventArgs e) { }
+// (11.x) GotFocusEventArgs
+```
+(12.0+) Cancellable: `GettingFocus` / `LosingFocus` raise `FocusChangingEventArgs` (`TryCancel()`, `TrySetNewFocusedElement(el)`).
+
+Gesture events are routed events declared on `InputElement`: `Tapped`, `RightTapped`, `DoubleTapped`, `Holding`, `Pinch`, `PinchEnded`, `PullGesture`, `ScrollGesture`, `SwipeGesture`, etc.
+```xml
+<Border Pinch="OnPinch"/>              <!-- (12.0+) -->
+<Border Gestures.Pinch="OnPinch"/>     <!-- (11.x) -->
+```
+```csharp
+myPanel.AddHandler(InputElement.TappedEvent, OnTapped);   // works in all versions
+```
+
 ## Interaction Events (Non-Routed) vs Routed
 
 `Control.AttachedToVisualTree` / `DetachedFromVisualTree` — not routed, fires on control directly:
@@ -216,4 +234,5 @@ protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e
 - **`new RoutedEventArgs(MyEvent)` missing source** — always pass `this` as source: `new RoutedEventArgs(MyEvent, this)`
 - **Forgetting `e.Handled = true`** in a handler that should consume the event — other handlers in the route still fire
 - **`OnApplyTemplate` without cleaning up previous subscriptions** — template can be re-applied; detach old handlers before attaching new ones
+- **(12.0+) `GotFocusEventArgs` / `Gestures.` prefix** — replaced by `FocusChangedEventArgs` / events directly on `InputElement`
 - **`e.NameScope.Get<T>` throws if part missing** — use `Find<T>` for optional parts to avoid `KeyNotFoundException`

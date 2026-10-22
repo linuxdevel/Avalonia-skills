@@ -1,6 +1,6 @@
 ---
 name: avalonia-controls-media
-description: Use when working with Avalonia media controls: Image, DrawingImage, PathIcon, MediaPlayerControl, or WebView/NativeWebView. Covers asset loading URIs, stretch modes, vector icons, video playback setup, and browser embedding for Avalonia 12.
+description: Use when working with Avalonia media controls: Image, DrawingImage (incl. Viewbox 12.0+), PathIcon, MediaPlayerControl (LibVLCSharp), or NativeWebView/NativeWebDialog (Avalonia.Controls.WebView, open source in 12.0+, commercial in 11.x). Covers asset loading URIs, stretch modes, vector icons, video playback setup, and web content embedding.
 ---
 
 # Avalonia Media Controls
@@ -121,6 +121,12 @@ Vector image source built from geometry. Use for scalable icons embedded as imag
 </Image>
 ```
 
+**`DrawingImage.Viewbox` (12.0+)** — `Rect?` in DIPs: which region of the `Drawing` to render. Crops the drawing or adds empty space around it. `null` (default) = the drawing's own bounds. Not in 11.x.
+
+```xml
+<DrawingImage Viewbox="0,0,64,64" Drawing="{StaticResource IconDrawing}"/>
+```
+
 > Prefer `PathIcon` for simple icons. Use `DrawingImage` when you need composite layered vector drawings or need to embed as `Image.Source`.
 
 ---
@@ -225,72 +231,83 @@ public class MediaViewModel : ObservableObject, IDisposable
 
 ---
 
-## WebView / NativeWebView
+## NativeWebView / NativeWebDialog (12.0+)
 
-Embeds a native browser engine. Requires `Avalonia.WebView` NuGet package.
+Official native browser control, open source (MIT) since 12.0, package **`Avalonia.Controls.WebView`** (versioned separately from core — pick the release matching your Avalonia version). Namespace `Avalonia.Controls` = default xmlns, **no prefix needed**. In **11.x** this control was a commercial add-on (Avalonia Accelerate), not part of the free packages; the old `Avalonia.WebView` / `wv:WebView` / `.UseWebView()` / `ExecuteScriptAsync` / `Url` API does not exist in the official control.
 
-**Supported engines:**
-- Windows: WebView2 (requires WebView2 Runtime)
-- macOS: WKWebView
-- Linux: WebKitGtk
-
-**NuGet:**
-```
-Avalonia.WebView
-Avalonia.WebView.Desktop   (for desktop platforms)
+```sh
+dotnet add package Avalonia.Controls.WebView
 ```
 
-**Registration in `Program.cs`:**
+**No `AppBuilder` call is required** — the docs show only the package reference and the control. (`UsePlatformDetect()` as usual.)
 
-```csharp
-AppBuilder.Configure<App>()
-    .UsePlatformDetect()
-    .UseAvaloniaNative()
-    .UseSkia()
-    .UseWebView()           // add this
-    .StartWithClassicDesktopLifetime(args);
-```
+| Platform | `NativeWebView` backend |
+|---|---|
+| Windows | WebView2 (preinstalled on Win 11; Win 10 may need the Evergreen runtime) |
+| macOS / iOS | WKWebView |
+| Linux | WPE WebKit (preferred if installed) or WebKitGTK 4.1 (GTK 3, libsoup 3; WebKitGTK 6.0 unsupported; needs X11 GDK backend / XWayland) |
+| Android | Android WebView (API 21+) |
+| Browser (WASM) | **Not supported** for `NativeWebView`/`NativeWebDialog` (only `WebAuthenticationBroker` works) |
 
-**AXAML usage:**
+`NativeWebDialog` (separate window hosting web content): Windows, macOS, Linux only.
 
 ```xml
-xmlns:wv="using:Avalonia.WebView"
+<!-- default xmlns, no prefix -->
+<NativeWebView x:Name="Browser"
+               Source="https://example.com"
+               NavigationCompleted="OnNavigationCompleted"
+               WebMessageReceived="OnWebMessage"/>
 
-<!-- Navigate to URL -->
-<wv:WebView x:Name="Browser"
-            Url="https://example.com"
-            Width="800" Height="600"/>
-
-<!-- Bind URL -->
-<wv:WebView Url="{Binding CurrentUrl}"
-            NavigationCompleted="OnNavigationCompleted"/>
+<!-- Bind Source (type Uri) -->
+<NativeWebView Source="{Binding CurrentUri}"/>
 ```
 
-**Code-behind:**
+| `NativeWebView` member | Notes |
+|---|---|
+| `Source` (`Uri`) | Styled property; set to navigate |
+| `Navigate(Uri)`, `NavigateToString(string html, Uri? baseUri = null)` | Programmatic navigation / inline HTML |
+| `GoBack()`, `GoForward()`, `Refresh()`, `Stop()` → `bool`; `CanGoBack`, `CanGoForward` | History |
+| `InvokeScript(string)` → `Task<string?>` | Run JS, returns result string. Faulted task (`InvalidOperationException`) if native adapter not created yet |
+| Events | `NavigationStarted`, `NavigationCompleted` (`WebViewNavigationCompletedEventArgs.IsSuccess`), `WebMessageReceived` (`.Body`), `NewWindowRequested`, `WebResourceRequested`, `EnvironmentRequested`, `AdapterCreated`, `AdapterDestroyed` |
+| Other | `UserAgent`, `Background`, `AdapterPreference`, `AdapterInfo`, `ShowPrintUI()`, `PrintToPdfStreamAsync()`, `TryGetCookieManager()`, `TryGetCommandManager()`, `TryGetPlatformHandle()`, `BeginReparenting()` |
 
 ```csharp
-// Navigate programmatically
-Browser.Url = new Uri("https://example.com");
+// Code-behind
+Browser.Source = new Uri("https://example.com");
+Browser.NavigateToString("<h1>Hello from Avalonia</h1>");
 
-// Load local HTML
-Browser.Url = new Uri("data:text/html,<h1>Hello from Avalonia</h1>");
-
-// Load local file
-Browser.Url = new Uri("file:///home/user/page.html");
-
-// Handle navigation events
 private void OnNavigationCompleted(object? sender, WebViewNavigationCompletedEventArgs e)
 {
-    if (!e.IsSuccess)
-        Console.WriteLine($"Navigation failed: {e.WebErrorStatus}");
+    if (!e.IsSuccess) Debug.WriteLine("Navigation failed");
+}
+
+// C# -> JS (wait until the adapter exists, e.g. after NavigationCompleted)
+string? title = await Browser.InvokeScript("document.title");
+
+// JS -> C#: page calls the helper `invokeCSharpAction(payload)`; C# receives it here
+private void OnWebMessage(object? sender, WebMessageReceivedEventArgs e)
+{
+    var body = e.Body;
 }
 ```
 
-**Execute JavaScript:**
+**NativeWebDialog** — dedicated window, not a control; `IDisposable`:
 
 ```csharp
-var result = await Browser.ExecuteScriptAsync("document.title");
+var dialog = new NativeWebDialog
+{
+    Title = "Sign in",
+    CanUserResize = true,
+    Source = new Uri("https://example.com/login")
+};
+dialog.NavigationCompleted += (_, e) => { /* e.IsSuccess */ };
+dialog.Show();            // or dialog.Show(owner) with a TopLevel
+// dialog.Close(); dialog.Dispose();
 ```
+
+**OAuth:** `WebAuthenticationBroker.AuthenticateAsync(window, new WebAuthenticatorOptions { RequestUri = ..., RedirectUri = ... })` → result `.CallbackUri` carries the response (all platforms incl. browser; Android experimental; browser needs CORS on the redirect page and .NET 10).
+
+> Linux packages: WebKitGTK 4.1 + libsoup 3 (baseline); WPE WebKit optional (Debian 13+/Fedora/Arch, not packaged on Ubuntu).
 
 ---
 
@@ -303,8 +320,7 @@ var result = await Browser.ExecuteScriptAsync("document.title");
 | FFME.Avalonia | GitHub: WangsYi/ffme.avalonia | FFmpeg-based MediaElement |
 | Mpv.Avalonia | GitHub: saverinonrails/Mpv.Avalonia | MPV + OpenGL media control |
 | MediaPlayerUI.NET | `MediaPlayerUI.NET` | Reusable media player UI shell |
-| Avalonia Accelerate | avaloniaui.net/accelerate | Premium WebView + MediaPlayer from the Avalonia team |
-| CefGlue | `Xilium.CefGlue.Avalonia` | Chromium Embedded Framework WebView |
+| CefGlue | `Xilium.CefGlue.Avalonia` | Chromium Embedded Framework WebView (bundled Chromium; alternative to the native `NativeWebView`) |
 | OutSystems WebView | GitHub: OutSystems/WebView | Full-featured Avalonia WebView |
 | MuPDFCore | `MuPDFCore` | PDF/XPS/ePub rendering via MuPDF |
 | Markdown.Avalonia | `Markdown.Avalonia` | Markdown renderer control |
@@ -334,7 +350,11 @@ mediaPlayer.Play(new Media(libVlc, new Uri("https://example.com/stream.mp4")));
 | `Image` leaking memory | `Bitmap` is `IDisposable` — call `.Dispose()` when image is replaced or view is closed |
 | `PathIcon` color not changing | Use `Foreground` property, **not** `Fill`. `Fill` has no effect on `PathIcon` |
 | `PathIcon` appears clipped | The `Data` geometry may have values outside `[0,0,width,height]`. Set `Width`/`Height` to match geometry bounds |
-| `WebView` blank on Windows | WebView2 Runtime not installed. Distribute or check for runtime in installer |
-| `WebView` crashes on non-desktop | Only works on `IClassicDesktopStyleApplicationLifetime`; guard before instantiation |
+| `NativeWebView` blank on Windows | WebView2 Runtime missing (Win 10) — install/distribute the Evergreen runtime |
+| `NativeWebView` / `.UseWebView()` / `Avalonia.WebView` copied from old samples | Wrong for 12: use package `Avalonia.Controls.WebView`, `<NativeWebView Source="..."/>`, no AppBuilder call, no `wv:` prefix |
+| `NativeWebView` on Browser (WASM) target | Not supported there — guard with a platform check. Only `WebAuthenticationBroker` works in browser |
+| `InvokeScript` throws `InvalidOperationException` | Native adapter not created yet — call after `AdapterCreated` / `NavigationCompleted` |
+| `NativeWebView` blank on Linux | Install WebKitGTK 4.1 (+ libsoup 3) or WPE WebKit; WebKitGTK 6.0 is unsupported; GTK backend needs X11/XWayland |
+| Using `NativeWebView` in an 11.x project | Commercial add-on in 11.x; free from 12.0 — upgrade or use CefGlue / community control |
 | `LibVLCSharp` video not showing | Must call `Core.Initialize()` before any LibVLC operation; missing platform NuGet package |
 | `DrawingImage` GeometryDrawing invisible | Check that `Brush` is set — unfilled geometry with no stroke is invisible |

@@ -81,8 +81,21 @@ public class MainViewModel : ReactiveObject
 }
 ```
 
-NuGet: `Avalonia.ReactiveUI`  
-App setup: `.UseReactiveUI()` in Program.cs
+| | Avalonia 12.x (12.0+) | Avalonia 11.x (11.x) |
+|---|---|---|
+| NuGet | `ReactiveUI.Avalonia` (12.1.x on NuGet requires Avalonia >= 12.1.3; later 14.x line exists — check NuGet) | `Avalonia.ReactiveUI` (ends at 11.3.x) |
+| Namespace | `using ReactiveUI.Avalonia;` | `using Avalonia.ReactiveUI;` |
+
+App setup (12.0+):
+```csharp
+using ReactiveUI.Avalonia;
+
+AppBuilder.Configure<App>()
+    .UsePlatformDetect()
+    .UseReactiveUI(rxui => { /* optional rxui.WithRegistration(...) */ })
+    .RegisterReactiveUIViewsFromEntryAssembly();
+```
+(11.x) `.UseReactiveUI()` with no arguments. DI variants in 12: `UseReactiveUIWithMicrosoftDependencyResolver`, `...WithAutofac`, `...WithDryIoc`, `...WithNinject` (separate `ReactiveUI.Avalonia.*` packages, namespace `ReactiveUI.Avalonia.Splat`). Base classes: `ReactiveWindow<TVM>`, `ReactiveUserControl<TVM>`; routing via `<rxui:RoutedViewHost Router="{Binding Router}"/>`.
 
 ## ICommand (Manual)
 
@@ -168,7 +181,7 @@ Use `ObservableCollection<T>` (not `List<T>`) so UI updates on add/remove.
 | Library | NuGet / Repo | Purpose |
 |---|---|---|
 | CommunityToolkit.Mvvm | `CommunityToolkit.Mvvm` | Source-generator MVVM (ObservableObject, RelayCommand) — recommended |
-| ReactiveUI | `Avalonia.ReactiveUI` | Reactive MVVM with Rx.NET observables |
+| ReactiveUI | `ReactiveUI.Avalonia` (12.0+) / `Avalonia.ReactiveUI` (11.x) | Reactive MVVM with Rx.NET observables |
 | Prism | `Prism.Avalonia` | Full MVVM framework with regions, modules, DI, dialogs |
 | Epoxy | `Epoxy.Avalonia` | Lightweight multi-platform MVVM |
 | FuncUI | `Avalonia.FuncUI` | F# MVU pattern with view DSL |
@@ -185,5 +198,7 @@ Use `ObservableCollection<T>` (not `List<T>`) so UI updates on add/remove.
 - Using `List<T>` instead of `ObservableCollection<T>` — list changes not reflected in UI
 - Not calling `PropertyChanged` with exact property name — use `nameof()`
 - Doing UI work in ViewModel (creating controls, accessing `DataContext`)
+- Creating `DispatcherTimer` in a ViewModel off the UI thread in 12 — it uses the current thread's dispatcher, not always the UI thread
 - Async command without `AsyncRelayCommand` — exceptions swallowed, UI blocks
+- Using `Avalonia.ReactiveUI` in an Avalonia 12 project — package stops at 11.3.x; switch to `ReactiveUI.Avalonia` and `using ReactiveUI.Avalonia;`
 - Forgetting `partial` keyword on CommunityToolkit ViewModel class — source gen fails silently

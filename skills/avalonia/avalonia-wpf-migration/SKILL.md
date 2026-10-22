@@ -5,6 +5,8 @@ description: Use when migrating a WPF application to Avalonia, mapping WPF conce
 # Avalonia WPF Migration
 
 ## Overview
+Target: **Avalonia 12.x** (12.1.x recommended); 11.x notes are labeled `(11.x)`; see avalonia-versions. Avalonia 12 requires net8.0+ (net10.0 recommended) — **.NET Framework and netstandard2.0 targets are not supported**, so retarget WPF apps on .NET Framework to modern .NET first (Avalonia 11.3 is the last line supporting them).
+
 Avalonia's API is intentionally WPF-like. Most XAML, binding, and MVVM patterns transfer directly. Key differences: styling system, ControlTemplates → ControlThemes, no Triggers, `.axaml` extension, namespace differences.
 
 ## Quick Mapping Table
@@ -35,7 +37,14 @@ Avalonia's API is intentionally WPF-like. Most XAML, binding, and MVVM patterns 
 | `IMultiValueConverter` | `IMultiValueConverter` | Same interface |
 | `ObservableCollection<T>` | `ObservableCollection<T>` | Same |
 | `ICommand` | `ICommand` | Same |
-| `CollectionViewSource` | `DataGridCollectionView` | Different class |
+| `CollectionViewSource` | No equivalent — sort/filter/group in the ViewModel (e.g. DynamicData, LINQ); `DataGridCollectionView` (`Avalonia.Controls.DataGrid`) only for DataGrid | No `ICollectionView` infrastructure |
+| `GroupBox` | `GroupBox` (12.0+) | 11.x: `HeaderedContentControl` + styling |
+| `ListView` + `GridView` (read-only columns) | `TableView` (12.1+) | 12.0/11.x: `DataGrid` (`Avalonia.Controls.DataGrid`) or `TreeDataGrid`; `DataGrid` is maintenance-mode |
+| `DataGrid` (editable) | `DataGrid` (`Avalonia.Controls.DataGrid`, separate package) | Not in core |
+| `TextBox` watermark (e.g. `Watermark` in toolkits) | `TextBox.PlaceholderText` (12.0+) | 11.x: `Watermark` (obsolete in 12) |
+| `DataObject` / `IDataObject` (clipboard, drag-drop) | `DataTransfer` + `DataTransferItem` (12.0+) | 11.x: `DataObject`; use `DragDrop.DoDragDropAsync`, `DragEventArgs.DataTransfer` |
+| `DragDrop.DoDragDrop` | `await DragDrop.DoDragDropAsync(...)` (12.0+) | |
+| `Clipboard.SetText/GetText` | `clipboard.SetTextAsync` / `TryGetTextAsync` | Async |
 | `Frame` + `NavigationService` | ContentControl + ViewModel swap | MVVM pattern preferred |
 
 ## Styles: No Triggers
@@ -127,6 +136,14 @@ await Dispatcher.UIThread.InvokeAsync(() => { /* UI update */ });
 Dispatcher.UIThread.Post(() => { /* fire-and-forget */ });
 ```
 
+## Bindings (12.0+)
+Compiled bindings are the default: WPF-style `{Binding Name}` needs `x:DataType` on the root/`DataTemplate`, otherwise it fails to compile. Quick path for ported XAML: add `x:DataType`, or use `{ReflectionBinding Name}`, or set `<AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>`. Data-annotation validation is opt-in.
+
+## MVVM Frameworks
+- ReactiveUI: package `ReactiveUI.Avalonia` (12.x); `Avalonia.ReactiveUI` does not exist for 12.
+- CommunityToolkit.Mvvm: unchanged.
+- WPF `SystemDecorations`/`WindowStyle`-like tweaks → `Window.WindowDecorations` (12.0+).
+
 ## What Works Without Changes
 - `INotifyPropertyChanged` implementations
 - `ICommand` implementations
@@ -134,12 +151,14 @@ Dispatcher.UIThread.Post(() => { /* fire-and-forget */ });
 - `IValueConverter` implementations
 - Data binding patterns (with namespace/syntax adjustments)
 - Most MVVM framework code (ReactiveUI, CommunityToolkit.Mvvm)
-- `ItemsControl`, `ListBox`, `DataGrid` (similar APIs)
+- `ItemsControl`, `ListBox` (similar APIs); `DataGrid` needs the `Avalonia.Controls.DataGrid` package
 - Grid, StackPanel, DockPanel layouts (same attached properties)
 
 ## Common Mistakes
 - Using WPF Trigger syntax — silently ignored or compile error
 - Using `pack://` URIs — assets not found
 - Calling `MessageBox.Show()` — doesn't exist
+- Targeting `net48` / `netstandard2.0` with Avalonia 12 — unsupported
+- `{Binding}` without `x:DataType` in 12 — compile error
 - Using `FrameworkElement` as base class — use `Control`
 - `Style TargetType` without `x:Key` for ControlThemes — template not applied

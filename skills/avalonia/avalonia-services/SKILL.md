@@ -1,11 +1,11 @@
 ---
 name: avalonia-services
-description: Use when accessing Avalonia platform services via TopLevel: clipboard read/write, file/folder/save dialogs via StorageProvider, URI/file launching via Launcher, screen and window info, focus manager, in-app notifications via WindowNotificationManager, or IME input method access.
+description: Use when accessing Avalonia platform services via TopLevel: clipboard read/write, file/folder/save dialogs via StorageProvider, URI/file launching via Launcher, screen and window info, focus manager, platform feedback (12.1+), in-app notifications via WindowNotificationManager, or IME input method access.
 ---
 # Avalonia Platform Services
 
 ## Overview
-Platform services are accessed via the `TopLevel` class (root of visual tree — typically `Window` or `PopupRoot`).
+Version labels: see `avalonia-versions`. Platform services are accessed via the `TopLevel` class (root of visual tree — typically `Window` or `PopupRoot`).
 
 ```csharp
 var topLevel = TopLevel.GetTopLevel(this); // 'this' = any attached control
@@ -21,21 +21,36 @@ var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
 // Write text
 await clipboard!.SetTextAsync("Hello, world");
 
-// Write custom data object
-var data = new DataObject();
-data.Set("application/x-myformat", myObject);
-data.Set(DataFormats.Text, "fallback text");
-await clipboard.SetDataObjectAsync(data);
+// Write custom data (12.0+)
+var item = new DataTransferItem();
+item.Set(DataFormat.Text, "fallback text");
+item.Set(DataFormat.CreateInProcessFormat<MyType>("myapp/mytype"), myObject);
+var data = new DataTransfer();
+data.Add(item);
+await clipboard.SetDataAsync(data);
 
-// Read text
-var text = await clipboard!.GetTextAsync(); // null if no text on clipboard
+// Read text (12.0+) — null if no text on clipboard
+var text = await clipboard.TryGetTextAsync();
 
-// Read custom format
-var formats = await clipboard!.GetFormatsAsync(); // string[]
-var raw = await clipboard!.GetDataAsync("application/x-myformat");
+// Read custom data (12.0+)
+var formats = await clipboard.GetDataFormatsAsync();           // IReadOnlyList<DataFormat>
+var mine = await clipboard.TryGetValueAsync(myFormat);         // DataFormat<T> where T : class
+var all = await clipboard.TryGetDataAsync();                   // IAsyncDataTransfer?
 
 // Clear
-await clipboard!.ClearAsync();
+await clipboard.ClearAsync();
+```
+
+`SetTextAsync`, `TryGetTextAsync`, `TryGetFilesAsync`, `TryGetBitmapAsync`, `SetValueAsync`, `GetDataFormatsAsync` are extension methods (`ClipboardExtensions`, namespace `Avalonia.Input.Platform`). On Windows, no `BinaryFormatter`: serialize custom objects explicitly (e.g. JSON string/bytes format).
+
+**(11.x)** equivalents — removed in 12:
+```csharp
+var data = new DataObject();
+data.Set(DataFormats.Text, "fallback text");
+await clipboard.SetDataObjectAsync(data);
+var text = await clipboard.GetTextAsync();
+var formats = await clipboard.GetFormatsAsync();     // string[]
+var raw = await clipboard.GetDataAsync("application/x-myformat");
 ```
 
 ## File Dialogs (StorageProvider)
@@ -160,16 +175,21 @@ if (this is Window window)
 ```csharp
 var fm = TopLevel.GetTopLevel(this)?.FocusManager;
 
-// Get focused element
 var focused = fm?.GetFocusedElement(); // IInputElement?
-
-// Focus a control
 fm?.Focus(myControl, NavigationMethod.Pointer);
 // NavigationMethod: Unspecified, Tab, Pointer, Directional
+myControl.Focus(NavigationMethod.Tab);   // or directly
 
-// Or directly
-myControl.Focus(NavigationMethod.Tab);
+// (12.0+) Focus Traversal
+fm?.TryMoveFocus(NavigationDirection.Next);
+var next = fm?.FindNextElement(NavigationDirection.Next);   // optional FindNextElementOptions
+var first = fm?.FindFirstFocusableElement();
 ```
+(11.x) `KeyboardNavigationHandler.GetNext` is removed in 12. See `avalonia-input-interaction` for cancellable focus (`GettingFocus`/`LosingFocus`).
+
+## Platform Feedback (12.1+)
+
+Haptic/sound feedback on Android and iOS, configurable via the `PlatformFeedback` API (`Avalonia.Controls`). Not in 12.0 or 11.x. Built-in controls use it automatically; consult the 12.1 API reference before using it from custom controls.
 
 ## In-App Notifications
 
@@ -222,12 +242,14 @@ inputMethod?.SetCursorRect(new Rect(x, y, 0, lineHeight));
 | `Screens` | `IScreens?` | Screen geometry/DPI |
 | `FocusManager` | `IFocusManager?` | Focus control |
 | `InputMethod` | `IInputMethod?` | IME cursor position |
-| `PlatformSettings` | `IPlatformSettings?` | OS theme, animation prefs |
+| `PlatformSettings` (11.x) / `GetPlatformSettings()` (12.0+) | `IPlatformSettings?` | OS theme, animation prefs |
 | `RendererDiagnostics` | `RendererDiagnostics` | FPS overlay, dirty rects |
 
 Platform settings (dark mode, animations):
 ```csharp
-var settings = TopLevel.GetTopLevel(this)?.PlatformSettings;
+// (12.0+) extension method on Visual
+var settings = this.GetPlatformSettings();
+// (11.x) TopLevel.GetTopLevel(this)?.PlatformSettings
 var isDark = settings?.GetColorValues().ThemeVariant == PlatformThemeVariant.Dark;
 var reduceMotion = settings?.GetColorValues().ContrastPreference == ColorContrastPreference.High;
 ```
@@ -258,6 +280,7 @@ The built-in `StorageProvider` handles file dialogs. For richer dialogs and noti
 
 - **`TopLevel.GetTopLevel(this)` returns `null` before attachment** — never call in constructor; use `OnAttachedToVisualTree` or control-loaded events
 - **`IStorageFile` is not a file path** — must use `OpenReadAsync()`/`OpenWriteAsync()` streams; `file.Path.LocalPath` may fail on sandboxed platforms (iOS/Android/browser)
+- **(12.0+) `SetDataObjectAsync`/`GetTextAsync`/`GetFormatsAsync`/`GetDataAsync`/`DataObject`** — removed; use `SetDataAsync`/`TryGetTextAsync`/`GetDataFormatsAsync`/`TryGetDataAsync`/`DataTransfer`
 - **Clipboard operations must be awaited** — fire-and-forget silently fails or throws on some platforms
 - **`WindowNotificationManager` created per-notification** — creates multiple overlapping managers; create once and store as field
 - **`WindowNotificationManager` must be created on UI thread** — don't create from background tasks

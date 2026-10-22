@@ -32,9 +32,12 @@ public async Task SaveCommand_WhenNameEmpty_CannotExecute()
 ```
 
 ## Headless Testing Setup
-NuGet packages:
+NuGet packages (same version as `Avalonia`):
 - `Avalonia.Headless`
-- `Avalonia.Headless.XUnit` (or `.NUnit`)
+- `Avalonia.Headless.XUnit` (or `Avalonia.Headless.NUnit`)
+- `Avalonia.Themes.Fluent` (controls need a theme)
+
+Test framework: **12.0+ requires xUnit v3 / NUnit 4** (`Avalonia.Headless.XUnit` 12.1.4 depends on `xunit.v3.extensibility.core`). **(11.x)** xUnit v2 / NUnit 3.
 
 ```csharp
 // Assembly-level attribute (AssemblyInfo.cs or top of test file)
@@ -44,9 +47,10 @@ public class TestAppBuilder
 {
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
-            .UseHeadless(new AvaloniaHeadlessOptions { UseHeadlessDrawing = true });
+            .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = true });
 }
 ```
+Optional isolation: `[assembly: AvaloniaTestIsolation(AvaloniaTestIsolationLevel.PerAssembly)]` (default `PerTest` recreates Application + Dispatcher; PerAssembly shares state, no concurrent tests). Use `[AvaloniaTheory]` instead of `[Theory]`.
 
 ## Writing Headless Tests (xUnit)
 ```csharp
@@ -97,13 +101,16 @@ var allButtons = window.GetVisualDescendants().OfType<Button>();
 ## Simulating Input
 ```csharp
 // Keyboard
-window.KeyPress(Key.Enter, KeyModifiers.None);
+window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
 window.KeyTextInput("Hello");
 
 // Mouse/Pointer
 window.MouseDown(new Point(100, 50), MouseButton.Left);
 window.MouseMove(new Point(150, 50));
 window.MouseUp(new Point(150, 50), MouseButton.Left);
+
+// DPI / render scaling (12.0+)
+window.SetRenderScaling(2.0);
 ```
 
 ## Screenshot Testing
@@ -152,6 +159,7 @@ Requires: `Verify.Avalonia` + `Verify.Xunit` (or NUnit variant).
 On first run, creates a `.verified.png` baseline. Subsequent runs diff against it — fails on visual regression.
 
 ## Common Mistakes
+- 12.x project still on xUnit v2 / NUnit 3 — Headless packages need xUnit v3 / NUnit 4
 - Missing `[assembly: AvaloniaTestApplication]` — headless renderer not initialized, NullReferenceException
 - Using `[Fact]` instead of `[AvaloniaFact]` for UI tests — no Avalonia dispatcher, random failures
 - Forgetting `window.Show()` before interacting — controls not attached to visual tree

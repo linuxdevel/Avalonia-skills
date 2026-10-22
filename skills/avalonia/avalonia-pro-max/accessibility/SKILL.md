@@ -13,11 +13,16 @@ Avalonia exposes accessibility through:
 | `Focusable` / `IsTabStop` / `TabIndex` | Keyboard traversal |
 | Focus pseudoclasses (`:focus`, `:focus-visible`, `:focus-within`) | Visible focus indication |
 | `KeyBindings`, `HotKey`, `KeyGesture` | Shortcuts |
-| `RequestedThemeVariant`, `PlatformSettings` | High-contrast / dark mode / reduced motion |
+| `RequestedThemeVariant`, platform settings (`TopLevel.PlatformSettings` (11.x), `visual.GetPlatformSettings()` (12.0+)) | High-contrast / dark mode / reduced motion |
 | `AccessKey` (`_File`) | Mnemonic underline shortcuts |
 | `ToolTip.Tip` | Hover and screen-reader hints |
 
 Targets: WCAG 2.2 AA, plus Windows UI Automation, macOS NSAccessibility, Linux AT-SPI.
+
+Version notes:
+- **(12.0+)** Linux AT-SPI2 accessibility backend (Orca). In 11.x there is no AT-SPI2 backend, so Linux screen-reader support is not available.
+- **(12.0+)** Validation errors are exposed through automation, and `TextBox.PlaceholderText` is accessible to screen readers.
+- **(12.0+)** `TopLevel.PlatformSettings` is removed. Use `visual.GetPlatformSettings()` (`VisualExtensions`). In 11.x use `TopLevel.GetTopLevel(this)?.PlatformSettings`.
 
 ---
 
@@ -102,6 +107,10 @@ Minimum: 2px ring, contrast ≥3:1 against the surface.
 | `Once` | Container as a whole gets one tab stop |
 | `None` | Skipped |
 
+### Focus Traversal API (12.0+)
+
+Avalonia 12 adds a Focus Traversal API: public `IFocusManager` (`FindNextElement`, `TryMoveFocus`, `FindFirstFocusableElement`, replacing `KeyboardNavigationHandler.GetNext`), cancellable focus changes, and `FocusChangedEventArgs` on `GotFocus`/`LostFocus` (replaces `GotFocusEventArgs`). Use it for programmatic focus moves (e.g. after closing a dialog or on a validation failure) instead of walking the visual tree. In 11.x use `KeyboardNavigationHandler` and `GotFocusEventArgs`.
+
 ### Arrow-key navigation
 
 Set `KeyboardNavigation.DirectionalNavigation` for Lists/grids to allow arrow keys.
@@ -182,6 +191,8 @@ Validate every brush pair light **and** dark. Common pitfalls:
 </StackPanel>
 ```
 
+(12.0+) Validation errors surface to assistive tech through automation automatically; keep the visible inline error and the `LiveSetting` line anyway so 11.x apps and custom error text behave the same. `PlaceholderText` (12.0+; `Watermark` in 11.x) is accessible, but never use it as the only label (see `LabeledBy`).
+
 Move focus to first invalid field on submit:
 ```csharp
 if (!IsValid && firstInvalid is Control c) c.Focus(NavigationMethod.Tab);
@@ -258,7 +269,7 @@ See `avalonia-pro-max/motion` — every animation must have a zero-duration fall
 ## Testing
 
 - Tab through every screen — can you reach and operate every control?
-- Activate Windows Narrator / macOS VoiceOver / Orca — read each major screen.
+- Activate Windows Narrator / macOS VoiceOver / Orca — read each major screen. Orca (Linux) requires Avalonia 12.0+ (AT-SPI2).
 - Run the app at OS DPI 200%.
 - Toggle high contrast.
 - Use the Avalonia DevTools `Visual Tree` → look for unnamed actionable controls.

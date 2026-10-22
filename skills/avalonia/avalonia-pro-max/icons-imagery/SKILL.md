@@ -22,6 +22,8 @@ description: Use when picking an icon library, drawing custom icons, embedding S
 
 ## Lucide.Avalonia (recommended default)
 
+> Icon packages (Lucide.Avalonia, Material.Icons.Avalonia, Projektanker.Icons.Avalonia, Svg.Skia) version independently of Avalonia — before using them with Avalonia 12 check on nuget.org that the release depends on `Avalonia` 12.x (compatibility not verified in this skill).
+
 ```sh
 dotnet add package Lucide.Avalonia
 ```

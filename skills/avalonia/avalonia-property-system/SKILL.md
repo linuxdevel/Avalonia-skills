@@ -89,7 +89,7 @@ XAML usage:
 | 1 | Animation |
 | 2 | Local value (`SetValue` / binding at `LocalValue`) |
 | 3 | Style trigger (active pseudoclass setter) |
-| 4 | Template binding |
+| 4 | Template binding (`BindingPriority.Template`; 11.x name `TemplatedParent` was removed in 12) |
 | 5 | Style setter (non-triggered) |
 | 6 | Inherited value |
 | 7 | Default value |
@@ -175,7 +175,7 @@ static MyControl()
 
 ## Data Validation
 
-Enable on `DirectProperty` with `enableDataValidation: true`, then throw in setter or implement `INotifyDataErrorInfo`:
+Enable on a property with `enableDataValidation: true`, then throw in setter or implement `INotifyDataErrorInfo`. **(12.0+)** such properties report validation errors automatically; remove `UpdateDataValidation` overrides that only call `DataValidationErrors.SetError`. To keep custom handling, override `UpdateDataValidation(AvaloniaProperty, BindingValueType, Exception?)` and skip the base call for that property. Data-annotations validation is opt-in in 12 (on by default in 11.x).
 ```csharp
 private int _age;
 public int Age
@@ -197,4 +197,5 @@ public int Age
 - **Forgetting `SetAndRaise` in `DirectProperty` setter** — plain field assignment won't notify bindings
 - **Setting value in constructor via property setter** — creates a local value that blocks style/theme overrides; use `SetCurrentValue` or set field directly in constructor
 - **`AddOwner` vs. `Register`** — `AddOwner` shares metadata and identity with source property (same `AvaloniaProperty` instance); bindings between types sharing a property work correctly
+- **(11.x) `IStyleable`, `BindingPriority.TemplatedParent`** — removed in 12; use `StyledElement` and `BindingPriority.Template`
 - **`change.GetNewValue<T>()`** — must match registered type exactly; mismatched cast throws `InvalidCastException`

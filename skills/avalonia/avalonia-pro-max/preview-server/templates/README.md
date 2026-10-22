@@ -10,9 +10,9 @@ Copy this folder to `.preview/variants/<N>/` and edit the four files. The render
 - **`PreviewScene.axaml`** — the actual screen to render. MUST be a `<UserControl>` (or any `Control` root). The host wraps it in a `<Window>` of the requested viewport size.
 - **`packages.txt`** *(optional)* — extra NuGet refs needed by this variant, one per line, format `Name` or `Name:Version`. Lines starting with `#` are ignored. Examples:
   ```
-  FluentAvalonia:2.1.0
+  FluentAvaloniaUI:3.1.0   # 3.x = Avalonia 12; use 2.5.1 with Avalonia 11.3
   Lucide.Avalonia
-  # SukiUI:6.0.0
+  # SukiUI:7.0.1            # 7.x = Avalonia 12.0.3+; 6.1.1 = Avalonia 11.3
   ```
 
 ## Hard rules
@@ -30,9 +30,11 @@ xmlns="https://github.com/avaloniaui"
 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 ```
 
+The host defaults to Avalonia 12.1.4 (`scaffold_host.py --avalonia-version`). Pick theme package versions that match it (see `avalonia-pro-max/themes` compatibility table).
+
 Add more (with `packages.txt` entries) as needed:
 ```
-xmlns:ui="using:FluentAvalonia.UI.Controls"        <!-- needs FluentAvalonia -->
+xmlns:ui="using:FluentAvalonia.UI.Controls"        <!-- needs FluentAvaloniaUI -->
 xmlns:lucide="using:Lucide.Avalonia"               <!-- needs Lucide.Avalonia -->
 xmlns:semi="https://irihi.tech/semi"               <!-- needs Semi.Avalonia -->
 xmlns:suki="clr-namespace:SukiUI.Controls;assembly=SukiUI"  <!-- needs SukiUI -->

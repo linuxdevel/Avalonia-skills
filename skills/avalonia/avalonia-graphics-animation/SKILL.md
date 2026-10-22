@@ -5,7 +5,7 @@ description: Use when working with Avalonia brushes, transforms, geometry, clipp
 # Avalonia Graphics & Animation
 
 ## Overview
-Avalonia renders via Skia (default) or Impeller. All visual effects are cross-platform. Animations use keyframe `Animation` class or property `Transitions`.
+Avalonia renders via Skia (the only built-in renderer in 12; Direct2D1 was removed). All visual effects are cross-platform. Animations use keyframe `Animation` class or property `Transitions`.
 
 ## Brushes
 
@@ -32,13 +32,15 @@ Avalonia renders via Skia (default) or Impeller. All visual effects are cross-pl
 ```xml
 <Rectangle Width="200" Height="200">
     <Rectangle.Fill>
-        <RadialGradientBrush GradientOrigin="50%,50%" Radius="50%">
+        <RadialGradientBrush GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
             <GradientStop Color="Yellow" Offset="0"/>
             <GradientStop Color="Red" Offset="1"/>
         </RadialGradientBrush>
     </Rectangle.Fill>
 </Rectangle>
 ```
+
+`RadialGradientBrush.Radius` was removed in 12 — use `RadiusX`/`RadiusY` (12.0+). (11.x: `Radius="50%"`.)
 
 Opacity shorthand: `Opacity="0.5"` on any control (applies to whole subtree).
 
@@ -166,7 +168,8 @@ Animation with easing and delay:
 | `IterationCount` | number or `INFINITE` |
 | `PlaybackDirection` | `Normal` / `Reverse` / `Alternate` / `AlternateReverse` |
 | `FillMode` | `None` / `Forward` / `Backward` / `Both` |
-| `Easing` | `LinearEasing`, `CubicEaseIn/Out/InOut`, `BounceEaseOut`, etc. |
+| `Easing` | `LinearEasing`, `CubicEaseIn/Out/InOut`, `BounceEaseOut`, `SplineEasing`, etc. |
+| `PlaybackBehavior` (12.0+) | `Auto` / `Always` / `OnlyIfVisible` — see below |
 
 Trigger animation from code:
 ```csharp
@@ -182,6 +185,13 @@ var animation = new Animation
 };
 await animation.RunAsync(myControl);
 ```
+
+**(12.0+)** Style animations no longer tick while the control is hidden (`IsVisible=false` / not in the visual tree). To keep them running set `PlaybackBehavior="Always"` on the `Animation`:
+```xml
+<Animation Duration="0:0:1" IterationCount="INFINITE" PlaybackBehavior="Always"> ... </Animation>
+```
+
+Easing/animator renames (12.0+): `CubicBezierEasing` → `SplineEasing` (custom cubic-bezier curve); `CustomAnimatorBase`/`CustomAnimatorBase<T>` → `InterpolatingAnimator<T>` for custom animators. (11.x: the old names, obsolete in late 11.x, removed in 12.)
 
 ## Transitions (Property Change)
 
@@ -221,6 +231,28 @@ In styles (apply to all matching controls):
     </Setter>
 </Style>
 ```
+
+## Text Rendering & Letter Spacing (12.0+)
+
+```xml
+<TextBlock Text="Spaced" TextElement.LetterSpacing="2" />   <!-- inherited attached property; TextBlock LetterSpacing="2" still works in XAML -->
+<Panel TextOptions.TextRenderingMode="Antialias" />
+```
+| 11.x | 12.0+ |
+|---|---|
+| `RenderOptions.TextRenderingMode` | `TextOptions.TextRenderingMode` (`TextOptions` also has `TextHintingMode`, `BaselinePixelAlignment`) |
+| `TextBlock.LetterSpacingProperty` (C#) | `TextElement.LetterSpacingProperty` |
+
+## Custom Drawing & Composition (12.0+ changes)
+
+- `DrawingContext.PushPreTransform` / `PushPostTransform` / `PushTransformContainer` removed → `context.PushTransform(matrix)`.
+- `CompositionVisual.Translation` added (12.0+) for compositor-driven offset animations without a layout pass.
+
+## Rendering Performance (12.1+)
+
+- Stencil buffers on by default (more clipping hardware-accelerated).
+- Multiple dirty-rect clipping off by default (cheaper than clipping on discrete GPUs).
+- X11 (and Windows with non-`WinUIComposition` render modes) renders at monitor refresh rate, not capped at 60 FPS. Time-based animations are unaffected; CPU/GPU use may rise.
 
 ## Page Transitions (Carousel/Navigation)
 
@@ -276,6 +308,7 @@ Or use `SvgImage` control directly from `Svg.Skia.Avalonia` package.
 - **Transitions only fire on property changes** — not on initial value set; hardcoded initial value + Transition won't animate on load
 - **`RenderTransform="rotate(45)"` string syntax** — no spaces inside parentheses; `rotate( 45 )` fails
 - **`BoxShadow` only on `Border`** — not on arbitrary controls like `Grid` or `StackPanel`
+- **Hidden control, animation frozen (12.0+)** — set `PlaybackBehavior="Always"`
 - **Animation `Cue` must be percent string** — `"0%"` and `"100%"`, not `0` or `1.0`
 - **`FillMode="None"` (default) reverts after animation** — use `FillMode="Forward"` to hold end state
 - **`IterationCount="INFINITE"` is all caps** — `Infinite` or `infinite` won't parse

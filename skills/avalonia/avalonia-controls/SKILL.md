@@ -1,23 +1,23 @@
 ---
 name: avalonia-controls
-description: Use when working with built-in Avalonia controls. Routes to the correct sub-subskill for the control category needed.
+description: Use when working with built-in Avalonia controls (11.3, 12.0, 12.1). Routes to the correct sub-subskill for input, data display (ItemsControl/ListBox/TableView/DataGrid/TreeView), layout (incl. GroupBox), navigation (incl. page-based Navigation/Drawer/TabbedPage, CommandBar, PipsPager) and media (Image, NativeWebView) controls.
 ---
 
 # Avalonia Controls
 
 ## Overview
 
-Avalonia ships 60+ built-in controls organized by category. Load the sub-subskill for the relevant control category.
+Avalonia ships 60+ built-in controls organized by category. Load the sub-subskill for the relevant control category. Labels like (12.0+), (12.1+), (11.x) follow the convention in `avalonia-versions`; unlabelled means all versions.
 
 ## Routing Table
 
 | Controls | Load sub-subskill |
 |---|---|
-| Button, ToggleButton, RadioButton, CheckBox, TextBox, ComboBox, Slider, Calendar, DatePicker, NumericUpDown | `avalonia-controls/input` |
-| TextBlock, Label, ListBox, DataGrid, TreeView, Carousel, MarkdownViewer | `avalonia-controls/data-display` |
-| Border, ScrollViewer, Grid, StackPanel, WrapPanel, DockPanel, UniformGrid, SplitView, Expander | `avalonia-controls/layout` |
-| TabControl, Menu, ContextMenu, CommandBar, TrayIcon | `avalonia-controls/navigation` |
-| Image, DrawingImage, MediaPlayerControl, WebView | `avalonia-controls/media` |
+| Button, ToggleButton, RadioButton, CheckBox, TextBox (`PlaceholderText` 12.0+, was `Watermark`), AutoCompleteBox, ComboBox, Slider, Calendar, CalendarDatePicker, DatePicker, NumericUpDown | `avalonia-controls/input` |
+| TextBlock, Label, ItemsControl, ListBox, TableView (12.1+), DataGrid (maintenance-only package), TreeView, TreeDataGrid (commercial), Carousel | `avalonia-controls/data-display` |
+| Border, ScrollViewer, Grid, StackPanel, WrapPanel, DockPanel, UniformGrid, SplitView, Expander, GroupBox (12.0+) | `avalonia-controls/layout` |
+| TabControl, Menu, ContextMenu, Flyout, NativeMenu, NativeDock.Menu (12.0+), TrayIcon, NavigationPage / DrawerPage / TabbedPage / ContentPage / CarouselPage / CommandBar (12.0+), PipsPager (12.0+) | `avalonia-controls/navigation` |
+| Image, DrawingImage (`Viewbox` 12.0+), NativeWebView / NativeWebDialog (12.0+, `Avalonia.Controls.WebView`) | `avalonia-controls/media` |
 
 ## Community Control Libraries
 
@@ -44,6 +44,6 @@ For controls beyond the built-ins, these libraries are widely used:
 | LiveCharts2 | `LiveChartsCore.SkiaSharpView.Avalonia` | Interactive charts and gauges |
 | OxyPlot | `OxyPlot.Avalonia` | Scientific/engineering plots |
 | ScottPlot | `ScottPlot.Avalonia` | Fast interactive data plots |
-| Markdown.Avalonia | `Markdown.Avalonia` | Markdown renderer control |
+| Markdown.Avalonia | `Markdown.Avalonia` | Markdown renderer control (no `MarkdownViewer` in core) |
 | GMap.NET | `GMap.NET.Avalonia` | Maps (Google, OpenStreetMap, etc.) |
 | CherylUI | GitHub: kikipoulet/CherylUI | Mobile-focused control library |

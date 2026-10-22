@@ -58,6 +58,20 @@ Available `*Transition` types: `DoubleTransition`, `BrushTransition`, `ColorTran
 
 `LinearEasing`, `BackEaseIn/Out/InOut`, `BounceEaseIn/Out/InOut`, `CircularEaseIn/Out/InOut`, `CubicEaseIn/Out/InOut`, `ElasticEaseIn/Out/InOut`, `ExponentialEaseIn/Out/InOut`, `QuadraticEaseIn/Out/InOut`, `QuarticEaseIn/Out/InOut`, `QuinticEaseIn/Out/InOut`, `SineEaseIn/Out/InOut`.
 
+### Custom cubic-bezier curves
+
+Use `SplineEasing` (properties `X1`, `Y1`, `X2`, `Y2`) for a custom CSS-style curve:
+
+```xml
+<DoubleTransition Property="Opacity" Duration="0:0:0.2">
+  <DoubleTransition.Easing>
+    <SplineEasing X1="0.4" Y1="0" X2="0.2" Y2="1"/>
+  </DoubleTransition.Easing>
+</DoubleTransition>
+```
+
+`CubicBezierEasing` was obsolete in 11.x and is **removed in 12** (**(11.x)** only) — use `SplineEasing` in every version. Likewise `CustomAnimatorBase` → `InterpolatingAnimator<T>` (12.0+) for custom animators.
+
 Defaults if unspecified: linear. Always set an easing for UI feel.
 
 Recommended:
@@ -111,6 +125,14 @@ Recommended:
   </Style.Animations>
 </Style>
 ```
+
+**Hidden controls (12.0+):** style-triggered animations no longer tick while their control is hidden (`IsVisible="False"` / not effectively visible), which saves CPU for off-screen spinners and shimmer. If an animation must keep running while hidden (e.g. a progress clock that must stay in sync), set `PlaybackBehavior="Always"`:
+
+```xml
+<Animation Duration="0:0:1" IterationCount="Infinite" PlaybackBehavior="Always">
+```
+
+In 11.x style animations kept running while hidden, so gate heavy looping animations on visibility yourself. Manually started animations and animations targeting `IsVisible` always play (`PlaybackBehavior="Auto"` default).
 
 Spinner:
 ```xml
@@ -273,6 +295,7 @@ True shared-element transitions are not built-in. Use:
 - Never animate `Width`, `Height`, `Margin`, `Padding`, `Grid.Column*`.
 - Cap concurrent animations per view: 2–3 max for most screens.
 - For 60fps, total animation cost per frame < 16 ms. Profile with `--renderer skia --fps`.
+- **(12.1+)** On X11, and on Windows with rendering modes other than `WinUIComposition`, Avalonia renders at the monitor refresh rate (>60 FPS). Animations are time-based so they stay correct, but frame budget shrinks (e.g. ~8 ms at 120 Hz) and CPU/GPU use can rise — keep animation cost low and do not hard-code per-frame (tick-count) math.
 - `IterationCount="Infinite"` only on small elements (spinner, badge dot).
 - Disable expensive transitions on battery (Mobile / WASM).
 

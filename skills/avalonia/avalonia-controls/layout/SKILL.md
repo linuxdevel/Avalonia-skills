@@ -1,6 +1,6 @@
 ---
 name: avalonia-controls-layout
-description: Use when working with Avalonia layout container controls: Border, ScrollViewer, SplitView, Expander, Viewbox, or Panel variants (Grid, StackPanel, WrapPanel, DockPanel, UniformGrid, Canvas). Covers container-specific API, properties, scroll configuration, and layout pitfalls in Avalonia 12.
+description: Use when working with Avalonia layout container controls: Border, ScrollViewer, SplitView, Expander, GroupBox (12.0+), Viewbox, or Panel variants (Grid, StackPanel, WrapPanel, DockPanel, UniformGrid, Canvas). Covers container-specific API, properties, scroll configuration, and layout pitfalls in Avalonia 12.
 ---
 
 # Avalonia Layout Controls
@@ -202,6 +202,29 @@ Collapsible section with a header.
 
 ---
 
+## GroupBox (12.0+)
+
+Headed container with a border (`HeaderedContentControl`, namespace `Avalonia.Controls`, core package). Not available in 11.x — use `Expander` or a `Border` + `TextBlock` there.
+
+| Property | Type | Notes |
+|---|---|---|
+| `Header` / `HeaderTemplate` | `object` / `IDataTemplate` | Group caption |
+| `Content` | `object` | Single child (wrap multiple in a panel) |
+| `Background`, `BorderBrush`, `BorderThickness`, `CornerRadius`, `Padding` | — | Standard templated-control appearance |
+
+```xml
+<GroupBox Header="Connection" Padding="12">
+    <StackPanel Spacing="8">
+        <TextBox PlaceholderText="Host" Text="{Binding Host}"/>
+        <NumericUpDown Value="{Binding Port}" Minimum="1" Maximum="65535"/>
+    </StackPanel>
+</GroupBox>
+```
+
+> For a full-page drawer/pane pattern with lifecycle events and safe-area support in 12.0+, see `DrawerPage` in `avalonia-controls/navigation` (built on `SplitView`).
+
+---
+
 ## Viewbox
 
 Scales a single child to fill available space while optionally preserving aspect ratio.
@@ -280,7 +303,7 @@ For full layout concepts see `avalonia-layout`. Quick API reference:
 ```xml
 <DockPanel LastChildFill="True">
     <Menu DockPanel.Dock="Top"/>
-    <StatusBar DockPanel.Dock="Bottom"/>
+    <Border DockPanel.Dock="Bottom" Height="24"/> <!-- status bar: no built-in StatusBar control -->
     <TreeView DockPanel.Dock="Left" Width="200"/>
     <ContentControl/><!-- fills remaining space -->
 </DockPanel>
@@ -312,6 +335,7 @@ For full layout concepts see `avalonia-layout`. Quick API reference:
 | Multiple children inside `Border` | Wrap in `StackPanel` or `Grid` — `Border.Child` accepts exactly one element |
 | `ScrollViewer` inside `StackPanel` not scrolling | `StackPanel` gives infinite height; use `Grid` with `Height="*"` row or set explicit height on `ScrollViewer` |
 | `SplitView` Pane content not showing | Set via `<SplitView.Pane>` property element, not as a child item |
+| `GroupBox` in an 11.x project | Doesn't exist before 12.0 — use `Expander` or a styled `Border` |
 | `Expander` header cut off | Set `MinHeight` on `Expander` or ensure parent doesn't constrain height to 0 |
 | `Viewbox` making content blurry | `Viewbox` uses bitmap scaling for raster content; use vector (`PathIcon`, `Canvas` paths) for crisp results |
 | `Canvas` not respecting size in layout | `Canvas` reports desired size as 0×0 by default; set explicit `Width`/`Height` on the `Canvas` element |

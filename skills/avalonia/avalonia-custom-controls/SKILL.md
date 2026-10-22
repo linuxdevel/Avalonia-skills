@@ -107,6 +107,8 @@ public static void SetIsHighlighted(Control element, bool value) => element.SetV
 
 Usage: `<Button local:MyHelper.IsHighlighted="True"/>`
 
+Template parts: `OnApplyTemplate(TemplateAppliedEventArgs e)` + `e.NameScope.Find<T>("PART_X")` — unchanged in 11.3/12.x.
+
 ## Custom Drawing (Render Override)
 
 ```csharp
@@ -127,6 +129,23 @@ public class CircleControl : Control
 ```
 
 Invalidate drawing: `InvalidateVisual()`
+
+### Rendering API changes in 12.0 (mostly custom backends / low-level bitmap code)
+
+| 11.x | 12.0+ |
+|---|---|
+| `DrawingContext.PushPreTransform` / `PushPostTransform` / `PushTransformContainer` | `PushTransform(matrix)` |
+| `BindingPriority.TemplatedParent` | `BindingPriority.Template` |
+| `ILockedFramebuffer` without alpha info | `ILockedFramebuffer.AlphaFormat` added; `new LockedFramebuffer(...)` ctor requires an `AlphaFormat` argument |
+| `Bitmap.CopyPixels(..., AlphaFormat)` | `Bitmap.CopyPixels(...)` — alpha format comes from the `ILockedFramebuffer` |
+| `IReadableBitmapWithAlphaImpl` | `IReadableBitmapImpl.AlphaFormat` |
+| `IPlatformRenderInterfaceContext.CreateOffscreenRenderTarget(PixelSize, double)` | `(PixelSize, Vector, bool)` |
+| `Layoutable.GetMaxSizeFromConstraint` (private) | protected, overridable |
+
+`DrawEllipse`/`DrawRectangle`/`DrawGeometry`/`DrawText` usage in `Render()` is unchanged. Standard `RenderTargetBitmap` code is unaffected.
+
+### Data validation in custom properties (12.0+)
+Binding plugins (`BindingPlugins`, `IDataValidationPlugin`, ...) were removed; data-annotations validation is off by default. Properties registered with `enableDataValidation: true` now report errors automatically, so remove `UpdateDataValidation` overrides that only call `DataValidationErrors.SetError`. Override it only to *suppress* the default for a given property (skip the base call).
 
 ## Custom Panel
 
@@ -163,6 +182,7 @@ public class CircularPanel : Panel
 // Make MyButton style as base Button (picks up Button's ControlTheme)
 protected override Type StyleKeyOverride => typeof(Button);
 ```
+`IStyleable` (`Type IStyleable.StyleKey`) was removed in 12 — always use `StyleKeyOverride` (works in 11.3 too); constrain generics on `StyledElement`, not `IStyleable`.
 
 ## Control Library Project
 
@@ -210,4 +230,5 @@ This is the Avalonia replacement for WPF `DataTrigger` and `EventTrigger`.
 - Not calling `InitializeComponent()` in UserControl constructor
 - Forgetting `partial` keyword on UserControl class
 - Using `StyledProperty` for high-frequency properties that don't need styling (perf issue)
+- Implementing `IStyleable` or using `BindingPriority.TemplatedParent` / `PushPreTransform` in 12.x — removed (see above)
 - Not providing `x:Key="{x:Type local:MyControl}"` in Generic.axaml ControlTheme

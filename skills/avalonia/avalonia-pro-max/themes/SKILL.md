@@ -22,6 +22,27 @@ description: Use when choosing or configuring a theme library for an Avalonia ap
 
 ---
 
+## Avalonia Version Compatibility (verified on nuget.org, 2026-10-22)
+
+Third-party themes version independently of Avalonia. Pick the package line that matches the project's Avalonia version (see `avalonia-versions`). "Min Avalonia" is the lowest Avalonia the package's nuspec declares (a NuGet minimum, not an exact pin). Do not mix a 11.x-line theme with a 12.x app or the reverse.
+
+| Package (NuGet id) | Avalonia 11.3 | Avalonia 12.0 / 12.1 |
+|---|---|---|
+| `FluentAvaloniaUI` | 2.5.1 (min Avalonia 11.3.12) | 3.0.0 (min 12.0.0) · 3.1.0 (min 12.1.0) |
+| `SukiUI` | 6.1.1 (min 11.3.14) | 7.0.1 (min 12.0.3). Stable 7.x on nuget is 7.0.1; later 7.0.2 builds are nightly only |
+| `Semi.Avalonia` | 11.3.22 (min 11.3.22) | 12.0.0 / 12.0.1 / 12.0.3 / 12.1.0 / 12.1.0.1 (12.1.0.1: min 12.1.0) |
+| `Irihi.Ursa` | 1.15.1 (min 11.3.7) | 2.0.0 to 2.2.0 published (2.2.0: min 12.0.2; earlier 2.x minimums not checked) |
+| `Irihi.Ursa.Themes.Semi` (Ursa + Semi bridge) | not checked | 2.2.0 (needs Irihi.Ursa 2.2.0, Semi.Avalonia 12.0.1+, Avalonia 12.0.2+) |
+| `Material.Avalonia` | up to 3.14.2 (min Avalonia 11.1.0) | 3.15.0 / 3.15.1 / 3.18.0 / 3.19.0 (min 12.0.0; intermediate versions not checked) · 3.20.0 / 3.21.0 (min 12.1.1) |
+| `ShadUI` | none (0.x line starts at Avalonia 12) | 0.2.0 (min 12.0.2) · 0.2.4 (min 12.1.0, net10.0/net9.0 targets) |
+
+Notes:
+- Target frameworks seen in nuspecs: FluentAvaloniaUI 2.5.1/3.x `net10.0` only; SukiUI 6.1.1/7.0.1 and Material.Avalonia 3.20/3.21 `net8.0` only; Semi.Avalonia 12.1.0.1 and Irihi.Ursa 2.2.0 `net8.0` + `net10.0`. Check your app's TargetFramework against the package.
+- ShadUI 0.2.4 lists `net10.0` and `net9.0` targets only; ShadUI 0.2.0 lists `net8.0`/`net9.0`/`net10.0`.
+- Not verified: runtime behavior of each theme on Avalonia 12 (only package metadata was checked). Read the project's release notes for breaking visual/API changes between major versions (e.g. FluentAvaloniaUI 2.x to 3.x, SukiUI 6.x to 7.x, Ursa 1.x to 2.x).
+
+---
+
 ## Recommendation Matrix by Product Type
 
 | Product | Best fit | Why |
@@ -75,7 +96,7 @@ Customize the FluentTheme accent via well-known resource keys:
 WinUI3-style controls + accent system. Best companion to `FluentTheme`.
 
 ```sh
-dotnet add package FluentAvalonia
+dotnet add package FluentAvaloniaUI   # 3.x for Avalonia 12, 2.5.x for Avalonia 11.3
 ```
 
 ```xml
@@ -99,7 +120,7 @@ Use **instead of** `FluentTheme` (FluentAvaloniaTheme already includes Fluent ba
 Opinionated flat dark-friendly theme, modern look. Includes own controls and dialog system.
 
 ```sh
-dotnet add package SukiUI
+dotnet add package SukiUI   # 7.x for Avalonia 12, 6.x for Avalonia 11.3
 ```
 
 ```xml
@@ -129,7 +150,7 @@ Dialogs: `ISukiDialogManager` injected into ViewModel.
 Port of Semi Design (ByteDance). Clean, dense, great for forms.
 
 ```sh
-dotnet add package Semi.Avalonia
+dotnet add package Semi.Avalonia   # version line follows Avalonia (11.3.x / 12.x)
 ```
 
 ```xml
@@ -145,14 +166,13 @@ Often paired with **Ursa.Avalonia** (same author) for extra controls (TagInput, 
 
 ```sh
 dotnet add package Irihi.Ursa
-dotnet add package Semi.Avalonia.Ursa
+dotnet add package Irihi.Ursa.Themes.Semi
 ```
 
 ```xml
 <Application.Styles>
-  <semi:SemiTheme/>
-  <ursa:UrsaTheme/>
-  <ursa:SemiTheme/>   <!-- bridge styles -->
+  <semi:SemiTheme Locale="en-US"/>
+  <semi:UrsaSemiTheme Locale="en-US"/>   <!-- Ursa bridge styles -->
 </Application.Styles>
 ```
 
@@ -163,7 +183,7 @@ dotnet add package Semi.Avalonia.Ursa
 True Material Design 3.
 
 ```sh
-dotnet add package Material.Avalonia
+dotnet add package Material.Avalonia   # 3.15+ needs Avalonia 12; 3.14.x for Avalonia 11
 dotnet add package Material.Avalonia.DataGrid    <!-- optional -->
 dotnet add package Material.Icons.Avalonia
 ```
@@ -186,7 +206,7 @@ Use `Material.Icons.Avalonia` for the icon set:
 
 ## ShadUI
 
-shadcn/ui-inspired styling for Avalonia. Currently community-driven; check repo for latest install.
+shadcn/ui-inspired styling for Avalonia. Currently community-driven; check repo for latest install. NuGet id `ShadUI`; every published version (0.2.x) targets Avalonia 12 (no Avalonia 11 line).
 
 Aesthetic: minimal, neutral grays, single accent, subtle shadows, generous radius. Ideal for developer-facing tools.
 
@@ -206,6 +226,8 @@ dotnet add package Irihi.Ursa
   <ursa:UrsaTheme/>
 </Application.Styles>
 ```
+
+Use Ursa 2.x with Avalonia 12 and Ursa 1.x with Avalonia 11.3 (see compatibility table). The `ursa:UrsaTheme` snippet above is from earlier docs; confirm it against the project's README for the installed major version.
 
 ---
 
@@ -236,7 +258,7 @@ Niche aesthetics — ship as primary theme only when the app's identity demands 
 **Allowed** (tested combinations):
 - `FluentTheme` + `FluentAvalonia` → use FluentAvaloniaTheme (it includes Fluent base)
 - `FluentTheme` + `Ursa.Avalonia`
-- `Semi.Avalonia` + `Ursa.Avalonia` (+ Semi.Avalonia.Ursa bridge)
+- `Semi.Avalonia` + `Ursa.Avalonia` (+ Irihi.Ursa.Themes.Semi bridge)
 - Any theme + `Citrus.Avalonia` for table/scroll polish
 - Any theme + an icon library (`Lucide.Avalonia`, `Material.Icons.Avalonia`, `Projektanker.Icons.Avalonia`)
 

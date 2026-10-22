@@ -9,7 +9,7 @@
 
 ---
 
-A collection of dense reference skills that help AI coding agents (OpenCode, Claude Code, and others) write correct, idiomatic [Avalonia UI](https://avaloniaui.net/) code. Covers Avalonia 12 — the full framework from XAML to deployment.
+A collection of dense reference skills that help AI coding agents (OpenCode, Claude Code, and others) write correct, idiomatic [Avalonia UI](https://avaloniaui.net/) code. Covers Avalonia **11.3, 12.0 and 12.1** (latest stable 12.1.4) — the full framework from XAML to deployment. Version-specific APIs are labelled **(12.0+)**, **(12.1+)** or **(11.x)**, and the agent detects your project's version before writing code.
 
 Each skill is a focused reference document: real code patterns, key APIs, and the common mistakes that trip up even experienced developers. A master router skill automatically routes AI to the right subskill for any task.
 
@@ -38,7 +38,8 @@ curl -LsSf https://raw.githubusercontent.com/linuxdevel/Avalonia-skills/main/ins
 
 | Skill | Description |
 |---|---|
-| `avalonia` | Master router — identifies task and loads the correct subskill |
+| `avalonia` | Master router — detects project version, identifies task and loads the correct subskill |
+| `avalonia-versions` | Version/feature matrix for 11.3 / 12.0 / 12.1, renamed & removed APIs, migration and upgrade notes |
 | `avalonia-xaml` | XAML markup, .axaml files, namespaces, code-behind, markup extensions |
 | `avalonia-layout` | Panels (Grid, StackPanel, DockPanel, Canvas, WrapPanel), alignment, margins |
 | `avalonia-styling` | Styles, ControlThemes, style selectors, pseudoclasses, theme variants |
@@ -61,6 +62,10 @@ curl -LsSf https://raw.githubusercontent.com/linuxdevel/Avalonia-skills/main/ins
 | `avalonia-testing` | Headless UI tests, ViewModel unit tests, Avalonia.Headless |
 | `avalonia-deployment` | Windows, macOS, Linux, WASM, Android, iOS packaging |
 | `avalonia-wpf-migration` | WPF → Avalonia mapping, API differences, migration patterns |
+| `avalonia-threading` | UI thread rules, Dispatcher, async/await, DispatcherTimer, background work |
+| `avalonia-mobile` | Android/iOS lifetimes, safe areas, input pane, back button, haptics |
+| `avalonia-interop-rendering` | Composition API, Skia/OpenGL drawing, NativeControlHost, WinForms/WPF/WinUI embedding |
+| `avalonia-performance` | DevTools, virtualization, rendering cost, trimming, NativeAOT |
 | `avalonia-pro-max` | Router for visual design / UI polish — beautiful Avalonia UIs |
 | `avalonia-pro-max/design-system` | Semantic tokens, palettes, typography, spacing, theme variants |
 | `avalonia-pro-max/themes` | FluentAvalonia, SukiUI, Semi, Material, ShadUI, Ursa selection matrix |

@@ -7,7 +7,22 @@ description: Use when writing data bindings, compiled bindings, converters, Mult
 
 ## Overview
 
-Avalonia 12: compiled bindings are **on by default**. The root element implicitly has `x:CompileBindings="true"`. Compiled bindings are verified at build time, require `x:DataType`, and generate no reflection overhead. Reflection bindings remain available per-binding with `x:CompileBindings=False`.
+**(12.0+)** compiled bindings are **on by default** (`AvaloniaUseCompiledBindingsByDefault` defaults `true`). `{Binding}` without `x:DataType` fails to compile. Compiled bindings are verified at build time and generate no reflection. Opt out per scope with `x:CompileBindings="False"`, per binding with `{ReflectionBinding}`, or globally with `<AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>`.
+
+**(11.x)** compiled bindings are opt-in: set `<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>` or `x:CompileBindings="True"`; otherwise `{Binding}` is reflection-based and `{CompiledBinding}` must be explicit.
+
+### Binding API in C# code
+| 11.x | 12.0+ |
+|---|---|
+| `IBinding` | `BindingBase` (`ReflectionBinding`, `CompiledBinding`, `TemplateBinding`, `IndexerBinding` derive from it) |
+| `InstancedBinding` | `BindingExpressionBase` |
+| `new Binding("Path")` | `new ReflectionBinding("Path")` (`Binding` kept for compatibility = `ReflectionBinding`) or `CompiledBinding` |
+
+```csharp
+// (12.0+) typed compiled binding from a lambda
+var b = CompiledBinding.Create((Item item) => item.Value);
+```
+Binding plugins (`BindingPlugins`) are **removed** in 12; data-annotations validation is **off by default** (11.x: on).
 
 ---
 
@@ -37,7 +52,7 @@ Avalonia 12: compiled bindings are **on by default**. The root element implicitl
 <!-- Opt out per-binding (reflection binding) -->
 <TextBox Text="{Binding Name, x:CompileBindings=False}"/>
 
-<!-- Explicit compiled binding syntax (same as default in Avalonia 12) -->
+<!-- Explicit compiled binding syntax (default in 12.0+; required in 11.x unless compiled-by-default is set) -->
 <TextBox Text="{CompiledBinding Name}"/>
 ```
 
@@ -163,6 +178,8 @@ public class InverseBoolConverter : IValueConverter
 </TextBlock>
 ```
 
+`FuncMultiValueConverter<TIn,TOut>` lambda parameter is `IReadOnlyList<TIn>` in 12.0+ (`IEnumerable<TIn>` in 11.x) — indexable (`values[0]`); update lambdas that declare `IEnumerable<TIn>`.
+
 With a custom `IMultiValueConverter`:
 ```csharp
 public class FullNameConverter : IMultiValueConverter
@@ -225,7 +242,7 @@ public string Name
 }
 ```
 
-For `AvaloniaObject` DirectProperty, enable validation explicitly:
+Data-annotations validation is off by default in 12.0+ (on in 11.x). Exceptions thrown in setters (`DataValidationException`) and `INotifyDataErrorInfo` still surface. For `AvaloniaObject` DirectProperty, `enableDataValidation: true` makes the property report errors automatically (12.0+):
 ```csharp
 public static readonly DirectProperty<MyControl, string> NameProperty =
     AvaloniaProperty.RegisterDirect<MyControl, string>(
@@ -294,7 +311,7 @@ Each item in a collection gets its own DataContext. Declare `x:DataType` on the 
            xmlns:diag="clr-namespace:Avalonia.Diagnostics;assembly=Avalonia"/>
 ```
 
-- **DevTools (F12 in Debug builds)**: Data Context panel shows current DataContext hierarchy and property values.
+- **DevTools (F12 in Debug builds)** — (12.0+) `AvaloniaUI.DiagnosticsSupport` package + `this.AttachDeveloperTools()` in `App`; (11.x) `Avalonia.Diagnostics` package + `this.AttachDevTools()` (package does not exist for 12). Data Context panel shows current DataContext hierarchy and property values.
 - **Output window**: Binding errors appear as warnings, e.g. `[Binding] Could not find a matching property accessor for 'Name'`.
 - Check `TraceLevel` on bindings: `{Binding Name, TraceLevel=Verbose}`.
 
@@ -306,6 +323,8 @@ Each item in a collection gets its own DataContext. Declare `x:DataType` on the 
 - **Binding to non-public members** — compiled bindings require `public` properties. Internal or private members cause build errors.
 - **Not implementing `INotifyPropertyChanged`** — binding updates are silently dropped. Use `ObservableObject` (CommunityToolkit), `ReactiveObject` (ReactiveUI), or `AvaloniaObject` with `SetAndRaise`.
 - **Using `OneTime` expecting updates** — `OneTime` captures the value once at binding activation. Use `OneWay` for live updates.
-- **Mixing `{Binding}` and `{CompiledBinding}` carelessly** — in Avalonia 12, `{Binding}` is compiled by default. Opt out explicitly with `x:CompileBindings=False` on the element, not by switching to `{CompiledBinding}` (they are the same thing).
+- **Writing `new Binding(...)` / `IBinding` in 12 code** — use `ReflectionBinding`/`CompiledBinding` and `BindingBase`.
+- **Relying on `BindingPlugins` or implicit annotation validation in 12** — removed / off by default.
+- **Mixing `{Binding}` and `{CompiledBinding}` carelessly** — in Avalonia 12, `{Binding}` is compiled by default (in 11.x it is reflection unless configured). Opt out explicitly with `x:CompileBindings=False` on the element, not by switching to `{CompiledBinding}` (they are the same thing).
 - **Reflection binding path with compiled binding scope** — special paths like `$parent`, `$self`, `#name` work only in compiled bindings and require the target type to be resolvable.
 - **Binding `Command` to a method name, not a property** — `Command` must bind to an `ICommand` property. Methods need to be wrapped in a command object.

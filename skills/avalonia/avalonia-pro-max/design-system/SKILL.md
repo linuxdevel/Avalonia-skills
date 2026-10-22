@@ -125,8 +125,9 @@ Choose ONE scale and stick to it. Modular scale 1.25 (Major Third) is a safe def
                     xmlns:sys="using:System">
 
   <!-- Font families -->
-  <FontFamily x:Key="FontSans">avares://MyApp/Assets/Fonts/Inter-Variable.ttf#Inter</FontFamily>
-  <FontFamily x:Key="FontMono">avares://MyApp/Assets/Fonts/JetBrainsMono-Variable.ttf#JetBrains Mono</FontFamily>
+  <!-- Static font files (Regular/Medium/SemiBold/Bold .ttf/.otf) in Assets/Fonts; family name after '#' -->
+  <FontFamily x:Key="FontSans">avares://MyApp/Assets/Fonts#Inter</FontFamily>
+  <FontFamily x:Key="FontMono">avares://MyApp/Assets/Fonts#JetBrains Mono</FontFamily>
 
   <!-- Sizes (modular scale 1.25) -->
   <sys:Double x:Key="FontSizeXs">12</sys:Double>
@@ -170,9 +171,13 @@ Type ramp Styles:
 
 Usage: `<TextBlock Classes="h1">Dashboard</TextBlock>`
 
-### Variable fonts
+### Fonts, variable fonts, letter spacing, text rendering
 
-Avalonia 11+ supports variable fonts (`.ttf`/`.otf` with axes). Inter and JetBrains Mono variable versions cover most needs at one file each.
+- **Ship static font files** (one `.ttf`/`.otf` per weight). Variable-font axis control is **not a released Avalonia feature**: as of the last check, the `fvar`/`avar` parsing and `FontVariations` property PRs were still open on GitHub (AvaloniaUI/Avalonia #22179, #22185), so do not rely on `wght`/`wdth` axes or `FontVariations`. Weight selection works by matching static files via `FontWeight`.
+- **(12.0+)** Only TrueType (`.ttf`) and OpenType (`.otf`) fonts are supported; legacy Type 1 (`.pfb`/`.pfm`) fonts no longer load.
+- **Letter spacing:** `TextElement.LetterSpacing` is an inherited attached property on all templated controls **(12.0+)**, so you can set it once on a parent control. In 11.x it is `TextBlock.LetterSpacing` only (not inherited). XAML on a `TextBlock` is source-compatible across versions. Use small positive values (e.g. `0.5`) for uppercase labels, slightly negative for large headings.
+- **Text rendering options (12.0+):** `TextOptions.TextRenderingMode`, `TextOptions.TextHintingMode` and `TextOptions.BaselinePixelAlignment` live on `TextOptions`. In 11.x the mode is `RenderOptions.TextRenderingMode` **(11.x)** — do not mix.
+- **(12.0+)** If you call `UseSkia()` explicitly in `AppBuilder` you must also call `UseHarfBuzz()` (package `Avalonia.HarfBuzz`) or startup throws "No text shaping system configured". `UsePlatformDetect()` handles it.
 
 ---
 
