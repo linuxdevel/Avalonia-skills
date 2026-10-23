@@ -111,7 +111,8 @@ static Action FollowOpacity(Control target, Control source)
     if (visual == sourceVisual || visual.Compositor != sourceVisual.Compositor)
         throw new ArgumentException("Use distinct visuals from the same compositor.");
 
-    var previousOpacity = visual.Opacity;
+    var previousOpacity = (float)target.Opacity;
+    visual.Opacity = previousOpacity;
     var expression = visual.Compositor.CreateExpressionAnimation("source.Opacity * gain");
     expression.SetReferenceParameter("source", sourceVisual);
     expression.SetScalarParameter("gain", 0.5f);
@@ -136,7 +137,7 @@ On **12.1.4**, this reference expression updates when its source property change
 
 ### Coordinated animation group (12.1 and 11.3)
 
-Set each animation's `Target` before adding it to the group. This example fades and scales an otherwise untransformed visual; use a dedicated wrapper if another behavior owns its scale or opacity. Keep the base opacity unchanged at startup so the renderer's next synchronization does not cancel the fade; the keyframes define its initial appearance. `Vector3KeyFrameAnimation` keyframes use `System.Numerics.Vector3`, including when the visual's property is exposed as `Vector3D`.
+Set each animation's `Target` before adding it to the group. This example fades and scales an otherwise untransformed visual; use a dedicated wrapper if another behavior owns its scale or opacity. Initialize the base opacity from `target.Opacity` before starting so the renderer's first synchronization does not cancel the fade; the keyframes define its initial appearance. `Vector3KeyFrameAnimation` keyframes use `System.Numerics.Vector3`, including when the visual's property is exposed as `Vector3D`.
 
 ```csharp
 using System;
@@ -148,7 +149,8 @@ static Action StartReveal(Control target)
 {
     var visual = ElementComposition.GetElementVisual(target) ?? throw new InvalidOperationException("Attach the target first.");
     var compositor = visual.Compositor;
-    var previousOpacity = visual.Opacity;
+    var previousOpacity = (float)target.Opacity;
+    visual.Opacity = previousOpacity;
     var previousScale = visual.Scale;
     if (previousOpacity == 0f) return () => { };
 
