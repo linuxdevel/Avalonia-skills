@@ -1,0 +1,25 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "avalonia-skills",
+  "version": "0.1.0",
+  "description": "Version-aware skills for building, styling, testing, and deploying Avalonia apps.",
+  "author": {
+    "name": "Avalonia Skills contributors"
+  },
+  "license": "MIT",
+  "keywords": ["avalonia", "dotnet", "xaml", "cross-platform"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Avalonia Skills",
+        "shortDescription": "Build Avalonia apps",
+        "longDescription": "Community guidance for Avalonia 11.3 and 12.x, including XAML, styling, composition, testing, and deployment. Checks the project's package version before choosing APIs.",
+        "developerName": "Avalonia Skills contributors",
+        "category": "Developer Tools",
+        "defaultPrompt": [
+          "Use Avalonia Skills to build or review this Avalonia app, starting by checking its package version."
+        ]
+      }
+    }
+  }
+}
