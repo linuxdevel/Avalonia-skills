@@ -163,6 +163,17 @@ var template = new FuncDataTemplate<PersonViewModel>((person, scope) =>
 myListBox.ItemTemplate = template;
 ```
 
+### Recycling Without Stale State (11.3 / 12.1)
+
+`supportsRecycling: true` is a correctness promise: `FuncDataTemplate.Build(data, existing)` returns the existing control without rerunning the factory. A one-time assignment such as `Text = person.FullName` or a handler capturing `person` can therefore keep the previous item's data.
+
+- Use bindings to the inherited `DataContext`, as in the binding example above. Avalonia's content presenter updates that context when it presents a different item; setting `DataContext = person` locally on the returned view can pin the old item.
+- Rebind/reset any state that is not bound: custom classes, validation decorations, expanded details, and animation values. Use `DataContextChanged` or a custom `IRecyclingDataTemplate.Build(data, existing)` implementation for per-item work; factory initialization is not a reuse callback.
+- Unsubscribe from the previous item, cancel its asynchronous work, and reject late results before attaching the next item. Construction and visual-tree attachment alone do not identify every item change.
+- Check an A → B → A reuse sequence, including a transition from an active/error state to a plain item. Keep recycling disabled when the view cannot safely switch items.
+
+The [recycling API](https://docs.avaloniaui.net/api/avalonia/controls/templates/irecyclingdatatemplate) requires `existing` to originate from the same template. See the [12.1.4 factory reuse implementation](https://github.com/AvaloniaUI/Avalonia/blob/12.1.4/src/Avalonia.Controls/Templates/FuncDataTemplate.cs) and [content-presenter context update](https://github.com/AvaloniaUI/Avalonia/blob/12.1.4/src/Avalonia.Controls/Presenters/ContentPresenter.cs). A direct caller of `Build(data, existing)` must also update the data context; the factory does not do it.
+
 ---
 
 ## Column Templates (TableView 12.1+, DataGrid)
