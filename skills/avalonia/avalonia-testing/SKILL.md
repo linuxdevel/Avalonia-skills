@@ -54,7 +54,7 @@ public class TestAppBuilder
             .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false });
 }
 ```
-`CaptureRenderedFrame()` requires Skia with `UseHeadlessDrawing = false`. The lightweight `UseHeadlessDrawing = true` backend is suitable for tests that do not capture screenshots. Avalonia 12 also requires `UseHarfBuzz()` when configuring Skia explicitly; omit the package and call on 11.x.
+`CaptureRenderedFrame()` requires Skia with `UseHeadlessDrawing = false`. The lightweight `UseHeadlessDrawing = true` backend is suitable for tests that do not capture screenshots. Avalonia 12 also requires `UseHarfBuzz()` when configuring Skia explicitly. On Avalonia 11.x, omit both the `Avalonia.HarfBuzz` package and the `.UseHarfBuzz()` call.
 
 Optional isolation: `[assembly: AvaloniaTestIsolation(AvaloniaTestIsolationLevel.PerAssembly)]` (default `PerTest` recreates Application + Dispatcher; PerAssembly shares state, no concurrent tests). Use `[AvaloniaTheory]` instead of `[Theory]`.
 

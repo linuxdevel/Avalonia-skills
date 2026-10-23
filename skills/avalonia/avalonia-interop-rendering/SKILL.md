@@ -136,7 +136,7 @@ On **12.1.4**, this reference expression updates when its source property change
 
 ### Coordinated animation group (12.1 and 11.3)
 
-Set each animation's `Target` before adding it to the group. This example fades and scales an otherwise untransformed visual; use a dedicated wrapper if another behavior owns its scale or opacity. `Vector3KeyFrameAnimation` keyframes use `System.Numerics.Vector3`, including when the visual's property is exposed as `Vector3D`.
+Set each animation's `Target` before adding it to the group. This example fades and scales an otherwise untransformed visual; use a dedicated wrapper if another behavior owns its scale or opacity. Keep the base opacity unchanged at startup so the renderer's next synchronization does not cancel the fade; the keyframes define its initial appearance. `Vector3KeyFrameAnimation` keyframes use `System.Numerics.Vector3`, including when the visual's property is exposed as `Vector3D`.
 
 ```csharp
 using System;
@@ -152,7 +152,6 @@ static Action StartReveal(Control target)
     var previousScale = visual.Scale;
     if (previousOpacity == 0f) return () => { };
 
-    visual.Opacity = 0f;
     visual.Scale = new Avalonia.Vector3D(0.96, 0.96, 1);
 
     var fade = compositor.CreateScalarKeyFrameAnimation();
@@ -175,6 +174,8 @@ static Action StartReveal(Control target)
     return () =>
     {
         visual.StopAnimationGroup(group);
+        // Force restoration even when the UI-side base opacity is unchanged.
+        visual.Opacity = previousOpacity == 0f ? 1f : 0f;
         visual.Opacity = previousOpacity;
         visual.Scale = previousScale;
     };
