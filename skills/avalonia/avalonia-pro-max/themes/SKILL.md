@@ -70,24 +70,18 @@ Always start here unless you have a strong reason. Ships with Avalonia, no extra
 
 Pair with `RequestedThemeVariant="Default"` to follow OS.
 
-Customize the FluentTheme accent via well-known resource keys:
+Customize the FluentTheme accent through its palettes (Avalonia 11.3 and 12.x):
 
 ```xml
-<Application.Resources>
-  <ResourceDictionary>
-    <ResourceDictionary.ThemeDictionaries>
-      <ResourceDictionary x:Key="Light">
-        <SolidColorBrush x:Key="SystemAccentColor"      Color="#2563EB"/>
-        <SolidColorBrush x:Key="SystemAccentColorDark1" Color="#1D4ED8"/>
-        <SolidColorBrush x:Key="SystemAccentColorLight1" Color="#3B82F6"/>
-      </ResourceDictionary>
-      <ResourceDictionary x:Key="Dark">
-        <SolidColorBrush x:Key="SystemAccentColor"      Color="#3B82F6"/>
-      </ResourceDictionary>
-    </ResourceDictionary.ThemeDictionaries>
-  </ResourceDictionary>
-</Application.Resources>
+<FluentTheme>
+  <FluentTheme.Palettes>
+    <ColorPaletteResources x:Key="Light" Accent="#2563EB"/>
+    <ColorPaletteResources x:Key="Dark" Accent="#3B82F6"/>
+  </FluentTheme.Palettes>
+</FluentTheme>
 ```
+
+`Accent` generates the related light/dark accent shades and can change at runtime. Other palette properties are read once at startup. The `SystemAccentColor*` resource keys hold `Color` values, not brushes. See [custom color palettes](https://docs.avaloniaui.net/docs/styling/themes#creating-custom-color-palettes).
 
 ---
 
