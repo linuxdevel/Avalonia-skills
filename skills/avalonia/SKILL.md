@@ -14,6 +14,10 @@ Avalonia is a cross-platform .NET UI framework using XAML (`.axaml`), with its o
 
 **Rule 2:** Always load the matching subskill before writing or reviewing Avalonia code. Subskills mark version-specific content as **(12.0+)**, **(12.1+)** or **(11.x)**; unlabelled content works in all supported versions.
 
+**Rule 3 — documentation lookup:** Prefer available MCP documentation tools before browsing: use an Avalonia-specific documentation provider first, then a general library-documentation provider such as Context7. Identify suitable tools by their descriptions and capabilities, not a fixed server alias. Follow the official documentation links when suitable MCP tools are unavailable or their results are incomplete, unrelated, or do not establish the target version. Verify version-specific behavior against matching documentation, tagged source, and the project's Avalonia packages. MCP providers are optional; keep the official links as sources and fallback.
+
+**Bundled references:** Resolve each route relative to this skill's directory: `avalonia-xaml` means `avalonia-xaml/SKILL.md`, and `avalonia-pro-max/motion` means `avalonia-pro-max/motion/SKILL.md`. Read the matching file even when the host exposes only the `avalonia` entrypoint. Resolve that file's supporting links and scripts relative to its own directory.
+
 ## Routing Table
 
 | Task | Load subskill |

@@ -49,6 +49,16 @@ Run this before merging UI work or cutting a release. Each item maps back to a s
 - [ ] Toasts auto-dismiss in 3–5s and are not focus-stealing
 - [ ] No "click here" — link/button labels describe their action
 
+### Reusable Component State Contract
+
+- [ ] Supported states are explicit for each reusable component: rest, pointer over, pressed, focus-visible, disabled, and applicable selected/loading/validation states
+- [ ] Each state defines its visual changes using shared tokens; meaningful states also have text, focus, or automation feedback where needed
+- [ ] Overlapping states have deliberate rules: for example, disabled/loading prevents duplicate commands, selected styling remains recognizable on hover, and validation styling preserves a visible focus indicator
+- [ ] Representative combined states are checked in light/dark and compact/default layouts; selector order alone is not treated as the product's state model
+- [ ] Motion eligibility, interruption, and reduced-motion behavior are defined per state; repeated loading/selection changes and recycled containers do not accumulate animations
+
+Apply this contract on both **12.1 and 11.3**. Use the control's actual supported [pseudoclasses](https://docs.avaloniaui.net/docs/styling/pseudoclasses) and [property value precedence](https://docs.avaloniaui.net/docs/properties/value-precedence), and preserve [accessible focus and state feedback](https://docs.avaloniaui.net/docs/app-development/accessibility). Loading behavior and motion eligibility are application policies, not built-in pseudoclasses shared by every control.
+
 ## Motion → `motion`
 
 - [ ] Hover/press feedback ≤150 ms

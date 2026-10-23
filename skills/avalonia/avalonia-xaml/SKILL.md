@@ -1,6 +1,6 @@
 ---
 name: avalonia-xaml
-description: Use when writing or reviewing Avalonia XAML markup, .axaml files, XML namespaces, code-behind, markup extensions, or building UI without XAML in code.
+description: Use when writing or reviewing Avalonia XAML markup, .axaml files, XML namespaces, code-behind, markup extensions, runtime XAML loading, or building UI without XAML in code.
 ---
 
 # Avalonia XAML
@@ -195,6 +195,10 @@ Gesture attached events live directly on `InputElement` — drop the `Gestures.`
     <Color x:Key="BrandColor">#5B4FCF</Color>
 </ResourceDictionary>
 ```
+
+## Runtime XAML for Previewers and Editors
+
+For runtime-loaded documents, relative includes, existing root instances, diagnostics, and source locations, read [references/runtime-xaml.md](references/runtime-xaml.md). It covers Avalonia 12.1 and 11.3; normal application views should keep the compiled `InitializeComponent()` path.
 
 ## Common Mistakes
 

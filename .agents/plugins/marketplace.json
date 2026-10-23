@@ -1,0 +1,20 @@
+{
+  "name": "avalonia-skills-marketplace",
+  "interface": {
+    "displayName": "Avalonia Skills"
+  },
+  "plugins": [
+    {
+      "name": "avalonia-skills",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

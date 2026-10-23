@@ -1,6 +1,6 @@
 ---
 name: avalonia-interop-rendering
-description: Use when going beyond Render()/DrawingContext in Avalonia — Composition API (ElementComposition, CompositionCustomVisualHandler, implicit animations), ICustomDrawOperation with direct SkiaSharp access, OpenGlControlBase, WriteableBitmap/ILockedFramebuffer pixel work, NativeControlHost embedding native HWND/NSView, hosting Avalonia in WinForms/WinUI or EmbeddableControlRoot, text-shaping setup (UseSkia + UseHarfBuzz), or choosing/configuring rendering backends (Skia, Wayland, refresh rate).
+description: Use when going beyond Render()/DrawingContext in Avalonia — Composition API (ElementComposition, CompositionCustomVisualHandler, implicit/expression animations and animation groups), ICustomDrawOperation with direct SkiaSharp access, OpenGlControlBase, WriteableBitmap/ILockedFramebuffer pixel work, NativeControlHost embedding native HWND/NSView, hosting Avalonia in WinForms/WinUI or EmbeddableControlRoot, text-shaping setup (UseSkia + UseHarfBuzz), or choosing/configuring rendering backends (Skia, Wayland, refresh rate).
 ---
 # Avalonia Advanced Rendering & Native Interop
 
@@ -94,6 +94,99 @@ ElementComposition.GetElementVisual(childControl)!.ImplicitAnimations = implicit
 ```
 
 Explicit: `visual.StartAnimation("Opacity", anim)`, `StopAnimation`, `StartAnimationGroup`. `CompositionVisual` properties: `Offset`, `Opacity`, `Scale` (`Vector3D`), `RotationAngle`, `CenterPoint`, `Size` (`Vector`), `Visible`, `ClipToBounds`, `OpacityMask`, `Orientation`. **(12.0+)** `Translation` (`Vector3D`) — offset applied on top of layout `Offset`, ideal for transient motion without fighting layout.
+
+### Parameterized expression animation (12.1)
+
+An expression can follow another composition object's properties without a UI-thread update each frame. Both controls must be attached to the same compositor. This helper owns the target's composition opacity until its cleanup action runs; do not start a competing animation or binding on that property.
+
+```csharp
+using System;
+using Avalonia.Controls;
+using Avalonia.Rendering.Composition;
+
+static Action FollowOpacity(Control target, Control source)
+{
+    var visual = ElementComposition.GetElementVisual(target) ?? throw new InvalidOperationException("Attach the target first.");
+    var sourceVisual = ElementComposition.GetElementVisual(source) ?? throw new InvalidOperationException("Attach the source first.");
+    if (visual == sourceVisual || visual.Compositor != sourceVisual.Compositor)
+        throw new ArgumentException("Use distinct visuals from the same compositor.");
+
+    var previousOpacity = (float)target.Opacity;
+    visual.Opacity = previousOpacity;
+    var expression = visual.Compositor.CreateExpressionAnimation("source.Opacity * gain");
+    expression.SetReferenceParameter("source", sourceVisual);
+    expression.SetScalarParameter("gain", 0.5f);
+    visual.StartAnimation("Opacity", expression);
+
+    return () =>
+    {
+        visual.StopAnimation("Opacity");
+        // Force a base-value update even if the UI-side value never changed.
+        visual.Opacity = previousOpacity == 0f ? 1f : 0f;
+        visual.Opacity = previousOpacity;
+        expression.ClearAllParameters();
+    };
+}
+```
+
+Reference parameters follow the referenced composition property. Scalar/vector value parameters are copied when `StartAnimation` is called; changing `gain` afterward requires restarting the animation to apply it. Avoid expressions that feed a target property back into itself.
+
+On **12.1.4**, this reference expression updates when its source property changes after the animation has been committed. Arrange the target's initial appearance separately if it must match before the first source change. Cleanup explicitly writes the base opacity: `StopAnimation` disconnects the animation, and assigning the unchanged UI-side value alone can leave the last rendered value in place.
+
+**11.3:** the parameter APIs exist, but this live-reference recipe did not update in the **11.3.22** rendering check. Keep UI-driven relationships on ordinary bindings/transitions on that version rather than assuming the 12.1 behavior.
+
+### Coordinated animation group (12.1 and 11.3)
+
+Set each animation's `Target` before adding it to the group. This example fades and scales an otherwise untransformed visual; use a dedicated wrapper if another behavior owns its scale or opacity. Initialize the base opacity from `target.Opacity` before starting so the renderer's first synchronization does not cancel the fade; the keyframes define its initial appearance. `Vector3KeyFrameAnimation` keyframes use `System.Numerics.Vector3`, including when the visual's property is exposed as `Vector3D`.
+
+```csharp
+using System;
+using System.Numerics;
+using Avalonia.Controls;
+using Avalonia.Rendering.Composition;
+
+static Action StartReveal(Control target)
+{
+    var visual = ElementComposition.GetElementVisual(target) ?? throw new InvalidOperationException("Attach the target first.");
+    var compositor = visual.Compositor;
+    var previousOpacity = (float)target.Opacity;
+    visual.Opacity = previousOpacity;
+    var previousScale = visual.Scale;
+    if (previousOpacity == 0f) return () => { };
+
+    visual.Scale = new Avalonia.Vector3D(0.96, 0.96, 1);
+
+    var fade = compositor.CreateScalarKeyFrameAnimation();
+    fade.Target = "Opacity";
+    fade.Duration = TimeSpan.FromMilliseconds(180);
+    fade.InsertKeyFrame(0f, 0f);
+    fade.InsertKeyFrame(1f, previousOpacity);
+
+    var scale = compositor.CreateVector3KeyFrameAnimation();
+    scale.Target = "Scale";
+    scale.Duration = fade.Duration;
+    scale.InsertKeyFrame(0f, new Vector3(0.96f, 0.96f, 1f));
+    scale.InsertKeyFrame(1f, Vector3.One);
+
+    var group = compositor.CreateAnimationGroup();
+    group.Add(fade);
+    group.Add(scale);
+    visual.StartAnimationGroup(group);
+
+    return () =>
+    {
+        visual.StopAnimationGroup(group);
+        // Force restoration even when the UI-side base opacity is unchanged.
+        visual.Opacity = previousOpacity == 0f ? 1f : 0f;
+        visual.Opacity = previousOpacity;
+        visual.Scale = previousScale;
+    };
+}
+```
+
+Call either helper from `AttachedToVisualTree` or later and store the returned cleanup action. Invoke and clear it before restarting the effect and from `DetachedFromVisualTree`, on the UI dispatcher. Recreate visuals/animations after reattachment; do not reuse a compositor from another window. Honor the application's reduced-motion preference by skipping the reveal and showing the final state immediately. Composition animations do not provide the control's semantic loading/selection state.
+
+The group was rendered and its cleanup checked on **11.3.22 / 12.1.4**; the live-reference expression was checked on **12.1.4**. For an added slide effect, **12.0+** `Translation` avoids changing layout-owned `Offset`; **11.x** has no `Translation`, so animate a dedicated wrapper's transform or handle `Offset` ownership explicitly.
 
 ## ICustomDrawOperation + Skia
 
@@ -253,4 +346,6 @@ AppBuilder.Configure<App>().UseSkia().UseHarfBuzz();        // (12.0+) needs Ava
 - Breaking changes: https://docs.avaloniaui.net/docs/avalonia12-breaking-changes
 - 12.1 notes: https://avaloniaui.net/blog/release-12-1
 - Source: https://github.com/AvaloniaUI/Avalonia (`src/Avalonia.Base/Rendering/Composition`, `src/Skia/Avalonia.Skia/ISkiaSharpApiLeaseFeature.cs`, `src/Avalonia.OpenGL/Controls/OpenGlControlBase.cs`, `samples/ControlCatalog/Pages/CompositionPage.axaml.cs`)
+- Composition recipes: https://docs.avaloniaui.net/docs/graphics-animation/composition-animations · https://docs.avaloniaui.net/api/avalonia/rendering/composition/animations/expressionanimation · https://docs.avaloniaui.net/api/avalonia/rendering/composition/animations/compositionanimationgroup
+- Parameter snapshots and group lifecycle: https://github.com/AvaloniaUI/Avalonia/blob/12.1.4/src/Avalonia.Base/Rendering/Composition/Animations/CompositionAnimation.cs · https://github.com/AvaloniaUI/Avalonia/blob/12.1.4/src/Avalonia.Base/Rendering/Composition/CompositionObject.cs
 - Packages: https://www.nuget.org/packages/Avalonia.Win32.Interoperability · https://www.nuget.org/packages/Avalonia.WinUI

@@ -289,6 +289,12 @@ True shared-element transitions are not built-in. Use:
 
 ---
 
+## Composition Expressions and Groups
+
+For render-thread expressions that follow another visual, or a coordinated fade/scale group with cleanup, use the worked examples in [avalonia-interop-rendering](../../avalonia-interop-rendering/SKILL.md#parameterized-expression-animation-121). The expression targets 12.1; the group also supports 11.3. Keep ordinary hover/press feedback on transitions and preserve the reduced-motion path.
+
+---
+
 ## Performance Rules
 
 - Animate **transform + opacity + brush** only.
