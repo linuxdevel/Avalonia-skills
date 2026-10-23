@@ -109,6 +109,21 @@ Usage: `<Button local:MyHelper.IsHighlighted="True"/>`
 
 Template parts: `OnApplyTemplate(TemplateAppliedEventArgs e)` + `e.NameScope.Find<T>("PART_X")` — unchanged in 11.3/12.x.
 
+### C# Template Part Registration (11.3 / 12.1)
+
+In a `FuncControlTemplate`, setting `Name` alone does not register the part for `e.NameScope` lookup. Register it in the scope supplied to the factory:
+
+```csharp
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Templates;
+
+var template = new FuncControlTemplate<TemplatedControl>((owner, scope) =>
+    new Border { Name = "PART_Frame" }.RegisterInNameScope(scope));
+```
+
+`RegisterInNameScope` requires a non-null `Name`; `scope.Register("PART_Frame", part)` is the explicit alternative. The factory receives a fresh scope for each build, so the same part names can appear in separate template instances. Do not share one scope across those instances. See the [registration API](https://docs.avaloniaui.net/api/avalonia/controls/templates/functemplatenamescopeextensions) and [12.1.4 implementation](https://github.com/AvaloniaUI/Avalonia/blob/12.1.4/src/Avalonia.Controls/Templates/FuncTemplateNameScopeExtensions.cs).
+
 ## Custom Drawing (Render Override)
 
 ```csharp
