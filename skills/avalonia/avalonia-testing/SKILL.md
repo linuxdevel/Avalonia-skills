@@ -36,6 +36,8 @@ NuGet packages (same version as `Avalonia`):
 - `Avalonia.Headless`
 - `Avalonia.Headless.XUnit` (or `Avalonia.Headless.NUnit`)
 - `Avalonia.Themes.Fluent` (controls need a theme)
+- `Avalonia.Skia` (real rendering for screenshots)
+- `Avalonia.HarfBuzz` (**12.0+**; omit on 11.x)
 
 Test framework: **12.0+ requires xUnit v3 / NUnit 4** (`Avalonia.Headless.XUnit` 12.1.4 depends on `xunit.v3.extensibility.core`). **(11.x)** xUnit v2 / NUnit 3.
 
@@ -47,9 +49,13 @@ public class TestAppBuilder
 {
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
-            .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = true });
+            .UseSkia()
+            .UseHarfBuzz() // 12.0+; omit on 11.x
+            .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false });
 }
 ```
+`CaptureRenderedFrame()` requires Skia with `UseHeadlessDrawing = false`. The lightweight `UseHeadlessDrawing = true` backend is suitable for tests that do not capture screenshots. Avalonia 12 also requires `UseHarfBuzz()` when configuring Skia explicitly; omit the package and call on 11.x.
+
 Optional isolation: `[assembly: AvaloniaTestIsolation(AvaloniaTestIsolationLevel.PerAssembly)]` (default `PerTest` recreates Application + Dispatcher; PerAssembly shares state, no concurrent tests). Use `[AvaloniaTheory]` instead of `[Theory]`.
 
 ## Writing Headless Tests (xUnit)
