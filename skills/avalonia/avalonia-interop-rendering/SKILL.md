@@ -121,7 +121,8 @@ static Action FollowOpacity(Control target, Control source)
     return () =>
     {
         visual.StopAnimation("Opacity");
-        // Force a base-value update even if the UI-side value never changed.
+        // Workaround (checked on 12.1.4, internal behavior): force a base-value
+        // resync even if the UI-side value never changed. Re-verify on upgrades.
         visual.Opacity = previousOpacity == 0f ? 1f : 0f;
         visual.Opacity = previousOpacity;
         expression.ClearAllParameters();
@@ -137,7 +138,7 @@ On **12.1.4**, this reference expression updates when its source property change
 
 ### Coordinated animation group (12.1 and 11.3)
 
-Set each animation's `Target` before adding it to the group. This example fades and scales an otherwise untransformed visual; use a dedicated wrapper if another behavior owns its scale or opacity. Initialize the base opacity from `target.Opacity` before starting so the renderer's first synchronization does not cancel the fade; the keyframes define its initial appearance. `Vector3KeyFrameAnimation` keyframes use `System.Numerics.Vector3`, including when the visual's property is exposed as `Vector3D`.
+Set each animation's `Target` before adding it to the group. This example fades and scales a visual from 96% of its current scale; use a dedicated wrapper if another behavior owns its scale or opacity. Keep the base values at the final state (opacity from `target.Opacity`, the current scale) so the renderer's first synchronization does not cancel the animation and nothing snaps back after it finishes; the keyframes define its initial appearance. `Vector3KeyFrameAnimation` keyframes use `System.Numerics.Vector3`, including when the visual's property is exposed as `Vector3D`.
 
 ```csharp
 using System;
@@ -150,11 +151,13 @@ static Action StartReveal(Control target)
     var visual = ElementComposition.GetElementVisual(target) ?? throw new InvalidOperationException("Attach the target first.");
     var compositor = visual.Compositor;
     var previousOpacity = (float)target.Opacity;
-    visual.Opacity = previousOpacity;
-    var previousScale = visual.Scale;
     if (previousOpacity == 0f) return () => { };
 
-    visual.Scale = new Avalonia.Vector3D(0.96, 0.96, 1);
+    // Base values stay at the final state; keyframe 0 supplies the start.
+    visual.Opacity = previousOpacity;
+    var previousScale = visual.Scale;
+    var finalScale = new Vector3((float)previousScale.X, (float)previousScale.Y, (float)previousScale.Z);
+    var startScale = finalScale * new Vector3(0.96f, 0.96f, 1f);
 
     var fade = compositor.CreateScalarKeyFrameAnimation();
     fade.Target = "Opacity";
@@ -165,8 +168,8 @@ static Action StartReveal(Control target)
     var scale = compositor.CreateVector3KeyFrameAnimation();
     scale.Target = "Scale";
     scale.Duration = fade.Duration;
-    scale.InsertKeyFrame(0f, new Vector3(0.96f, 0.96f, 1f));
-    scale.InsertKeyFrame(1f, Vector3.One);
+    scale.InsertKeyFrame(0f, startScale);
+    scale.InsertKeyFrame(1f, finalScale);
 
     var group = compositor.CreateAnimationGroup();
     group.Add(fade);
@@ -176,9 +179,12 @@ static Action StartReveal(Control target)
     return () =>
     {
         visual.StopAnimationGroup(group);
-        // Force restoration even when the UI-side base opacity is unchanged.
-        visual.Opacity = previousOpacity == 0f ? 1f : 0f;
+        // Workaround (checked on 11.3.22 / 12.1.4, internal behavior): writing an
+        // unchanged base value may not resync the renderer after StopAnimationGroup,
+        // so write a different value first, then restore. Re-verify on upgrades.
+        visual.Opacity = 0f;
         visual.Opacity = previousOpacity;
+        visual.Scale = default;
         visual.Scale = previousScale;
     };
 }
