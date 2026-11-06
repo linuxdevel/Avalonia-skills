@@ -26,7 +26,7 @@ codex plugin add avalonia-skills@avalonia-skills-marketplace
 
 Start a new chat and use the `avalonia-skills:avalonia` skill for an Avalonia task. In Codex desktop, the registered **Avalonia Skills** marketplace also exposes the plugin in the Plugins directory. For Git-backed distribution, register the repository's Git URL with `codex plugin marketplace add` instead of a local path.
 
-The root `plugin.json` uses the [portable Agent Plugins format](https://developers.openai.com/plugins/build/plugins), with Codex presentation metadata under `extensions.com.openai`. The package bundles the `avalonia` router and its nested references under `skills/`; it needs no MCP server, credentials, hooks, or install script. This is a community package based on [linuxdevel/Avalonia-skills](https://github.com/linuxdevel/Avalonia-skills).
+The root `plugin.json` uses the [portable Agent Plugins format](https://developers.openai.com/plugins/build/plugins), with Codex presentation metadata under `extensions.com.openai`. The package bundles the `avalonia` router and its nested references under `skills/`; it needs no MCP server, credentials, hooks, or install script.
 
 ### Shell installer
 
